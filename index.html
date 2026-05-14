@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ControlCostos">
+<meta name="theme-color" content="#1d9e75">
+<title>ControlCostos · Restaurante</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f0;color:#1a1a1a;overscroll-behavior:none}
+.shell{max-width:480px;margin:0 auto;display:flex;flex-direction:column;height:100dvh;height:100vh}
+.topbar{background:#fff;border-bottom:0.5px solid #e0e0e0;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:20}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.back-btn{border:none;background:none;cursor:pointer;color:#666;font-size:20px;padding:2px;display:none;align-items:center}
+.tb-title{font-size:16px;font-weight:500}
+.tb-sub{font-size:11px;color:#888;margin-top:1px}
+.tb-action{border:none;background:none;cursor:pointer;color:#1d9e75;font-size:13px;font-weight:500;font-family:inherit}
+.scroll{flex:1;overflow-y:auto;padding:12px 12px 90px;-webkit-overflow-scrolling:touch}
+.bottomnav{background:#fff;border-top:0.5px solid #e0e0e0;display:flex;position:sticky;bottom:0;z-index:20;padding-bottom:env(safe-area-inset-bottom)}
+.bnav{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;cursor:pointer;border:none;background:none;color:#999;font-size:10px;font-family:inherit}
+.bnav i{font-size:22px}
+.bnav.on{color:#1d9e75}
+.page{display:none}.page.on{display:block}
+.fab{background:#1d9e75;color:#fff;border:none;border-radius:14px;padding:0 20px;height:50px;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;width:100%;justify-content:center;margin-bottom:10px}
+.fab i{font-size:18px}
+.fab:active{background:#0f6e56}
+.btn-out{width:100%;padding:13px;border-radius:12px;border:0.5px solid #ddd;background:#fff;color:#1a1a1a;font-size:14px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px;text-align:left}
+.btn-out i{font-size:20px;color:#888}
+.btn-out:active{background:#f5f5f0}
+.card{background:#fff;border-radius:14px;border:0.5px solid #e0e0e0;overflow:hidden;margin-bottom:10px}
+.cp{padding:14px}
+.slbl{font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:.7px;margin:16px 0 8px}
+.met-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.met{background:#f5f5f0;border-radius:10px;padding:12px 14px}
+.met-l{font-size:11px;color:#666;margin-bottom:4px}
+.met-v{font-size:20px;font-weight:500}
+.met-s{font-size:11px;color:#999;margin-top:2px}
+.row{display:flex;align-items:center;padding:13px 14px;border-bottom:0.5px solid #f0f0f0;gap:10px}
+.row:last-child{border-bottom:none}
+.row-info{flex:1;min-width:0}
+.row-t{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-s{font-size:12px;color:#888;margin-top:2px}
+.row-r{text-align:right;flex-shrink:0}
+.row-amt{font-size:14px;font-weight:500}
+.chev{font-size:16px;color:#ccc;flex-shrink:0}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bar-lbl{width:76px;flex-shrink:0;font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:#1d9e75;border-radius:4px}
+.bar-val{width:68px;text-align:right;flex-shrink:0;font-weight:500;font-size:12px}
+.ff{margin-bottom:12px}
+.ff label{font-size:12px;color:#666;display:block;margin-bottom:5px}
+.ff input,.ff select{width:100%;font-size:15px;padding:11px 12px;border:0.5px solid #ddd;border-radius:10px;background:#fff;color:#1a1a1a;font-family:inherit;-webkit-appearance:none;appearance:none}
+.ff input:focus,.ff select:focus{outline:none;border-color:#1d9e75}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.bg{background:#e1f5ee;color:#0f6e56}
+.ba{background:#faeeda;color:#854f0b}
+.br{background:#fcebeb;color:#a32d2d}
+.bb{background:#e6f1fb;color:#185fa5}
+.bk{background:#f0f0f0;color:#666}
+.upload-box{border:1.5px dashed #ddd;border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;margin-bottom:10px}
+.upload-box i{font-size:32px;color:#ccc;display:block;margin-bottom:8px}
+.upload-box p{font-size:14px;color:#666}
+.ai-load{display:flex;align-items:center;gap:10px;padding:14px;background:#e1f5ee;border-radius:10px;font-size:13px;color:#0f6e56;margin-bottom:10px}
+.dot{width:7px;height:7px;border-radius:50%;background:#1d9e75;animation:bl 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes bl{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.res-item{padding:12px 14px;border-bottom:0.5px solid #f0f0f0}
+.res-item:last-child{border-bottom:none}
+.res-name{font-size:14px;font-weight:500}
+.res-path{font-size:11px;color:#999;margin-top:2px}
+.res-bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:8px}
+.res-price{font-size:14px;font-weight:500}
+.tax-pill{font-size:11px;padding:2px 7px;border-radius:8px;background:#fcebeb;color:#a32d2d;margin-top:4px;display:inline-block}
+.tax-pill.none{background:#e1f5ee;color:#0f6e56}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:14px;border-top:0.5px solid #f0f0f0}
+.total-lbl{font-size:13px;color:#666}
+.total-v{font-size:20px;font-weight:500}
+.chip{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f5f5f0;border-radius:8px;margin-bottom:6px;font-size:13px}
+.chip-del{border:none;background:none;color:#bbb;cursor:pointer;font-size:18px;padding:0 4px}
+.hint{font-size:12px;margin:-4px 0 10px;min-height:16px}
+.info-box{background:#e6f1fb;border-radius:10px;padding:11px 13px;font-size:12px;color:#185fa5;margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.warn-box{background:#faeeda;border-radius:10px;padding:11px 13px;font-size:12px;color:#854f0b;margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.empty{text-align:center;padding:48px 16px}
+.empty i{font-size:44px;color:#ccc;display:block;margin-bottom:12px}
+.empty p{font-size:14px;color:#888;margin-bottom:16px}
+.tax-row-edit{display:flex;align-items:center;padding:12px 14px;border-bottom:0.5px solid #f0f0f0;gap:10px;cursor:pointer}
+.tax-row-edit:last-child{border-bottom:none}
+.tax-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.edit-panel{background:#f5f5f0;padding:12px 14px;border-bottom:0.5px solid #f0f0f0;display:none}
+.edit-panel.open{display:block}
+.rate-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.rate-lbl{font-size:12px;color:#666;width:130px;flex-shrink:0}
+.rate-input{font-size:14px;padding:7px 10px;border:0.5px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;width:80px;text-align:right}
+.rate-input:focus{outline:none;border-color:#1d9e75}
+.save-mini{background:#1d9e75;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:6px;width:100%}
+.save-mini:active{background:#0f6e56}
+.err-box{background:#fcebeb;border-radius:10px;padding:14px;font-size:13px;color:#a32d2d;margin-bottom:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" id="back-btn" onclick="goBack()"><i class="ti ti-arrow-left"></i></button>
+      <div><div class="tb-title" id="tb-title">Resumen</div><div class="tb-sub" id="tb-sub">Control de costos</div></div>
+    </div>
+    <button class="tb-action" id="tb-act" style="display:none"></button>
+  </div>
+
+  <div class="scroll" id="scroll">
+    <div class="page on" id="pg-home"></div>
+    <div class="page" id="pg-facturas"></div>
+    <div class="page" id="pg-nueva"></div>
+    <div class="page" id="pg-reportes"></div>
+    <div class="page" id="pg-impuestos"></div>
+  </div>
+
+  <nav class="bottomnav">
+    <button class="bnav on" onclick="go('home',this)"><i class="ti ti-home"></i>Inicio</button>
+    <button class="bnav" onclick="go('facturas',this)"><i class="ti ti-file-invoice"></i>Facturas</button>
+    <button class="bnav" onclick="go('nueva',this)"><i class="ti ti-plus"></i>Nueva</button>
+    <button class="bnav" onclick="go('reportes',this)"><i class="ti ti-chart-bar"></i>Reportes</button>
+    <button class="bnav" onclick="go('impuestos',this)"><i class="ti ti-receipt-tax"></i>Impuestos</button>
+  </nav>
+</div>
+
+<input type="file" id="file-in" accept="image/*" style="display:none" onchange="onFile(this)">
+
+<script>
+/* ── DATOS INICIALES ── */
+const TAXES_DEFAULT = {
+  general:[{id:'iva',nombre:'IVA general',desc:'Mayoría de productos',icon:'ti-receipt',ic:'#e1f5ee',icol:'#0f6e56',iva:19,ad:0,nota:'Art. 14 DL 825',tipo:'normal',cats:['Verduras','Frutas','Lácteos','Panadería','Abarrotes','Desechables','Limpieza','Proteínas']}],
+  bebidas:[
+    {id:'beb_bajo',nombre:'Bebidas analcohólicas',desc:'Menos de 15g azúcar / 240ml',icon:'ti-bottle',ic:'#faeeda',icol:'#854f0b',iva:19,ad:10,nota:'Art. 42 a) LIVS',tipo:'adicional',cats:['Aguas','Jugos']},
+    {id:'beb_alto',nombre:'Bebidas alto en azúcar',desc:'Más de 15g / 240ml · sello negro',icon:'ti-droplet',ic:'#fcebeb',icol:'#a32d2d',iva:19,ad:18,nota:'Art. 42 a) LIVS',tipo:'adicional',cats:[]},
+    {id:'cerveza',nombre:'Vinos, cerveza y sidra',desc:'Bebidas alcohólicas fermentadas',icon:'ti-beer',ic:'#faeeda',icol:'#854f0b',iva:19,ad:20.5,nota:'Art. 42 c) LIVS',tipo:'adicional',cats:['Cervezas','Vinos']},
+    {id:'licores',nombre:'Licores y destilados',desc:'Pisco, whisky, aguardiente, vermouth',icon:'ti-glass-full',ic:'#fcebeb',icol:'#a32d2d',iva:19,ad:31.5,nota:'Art. 42 b) LIVS',tipo:'adicional',cats:[]}
+  ],
+  carnes:[
+    {id:'carne_ant',nombre:'Vacuno (IVA anticipado)',desc:'5% adicional sobre venta',icon:'ti-meat',ic:'#fcebeb',icol:'#a32d2d',iva:19,ad:5,nota:'Código 17/18 SII',tipo:'anticipado',cats:['Vacuno']},
+    {id:'harina_ant',nombre:'Harina de trigo',desc:'12% IVA anticipado',icon:'ti-bread',ic:'#fcebeb',icol:'#a32d2d',iva:19,ad:12,nota:'Código 18 SII',tipo:'anticipado',cats:['Harinas']},
+    {id:'pollo_n',nombre:'Pollo, cerdo, huevos',desc:'IVA normal sin anticipado',icon:'ti-feather',ic:'#e1f5ee',icol:'#0f6e56',iva:19,ad:0,nota:'IVA normal',tipo:'normal',cats:['Pollo','Cerdo','Huevos']},
+    {id:'pesca_n',nombre:'Pescado y mariscos',desc:'IVA normal',icon:'ti-fish',ic:'#e1f5ee',icol:'#0f6e56',iva:19,ad:0,nota:'IVA normal',tipo:'normal',cats:['Salmón','Mariscos']}
+  ]
+};
+
+const CAT_MAP = {
+  "palta":["Cocina caliente","Verduras","Paltas"],"aguacate":["Cocina caliente","Verduras","Paltas"],"palta hass":["Cocina caliente","Verduras","Paltas"],
+  "tomate":["Cocina caliente","Verduras","Tomates"],"tomate cherry":["Cocina caliente","Verduras","Tomates"],"tomate italiano":["Cocina caliente","Verduras","Tomates"],
+  "lechuga":["Cocina caliente","Verduras","Hojas verdes"],"espinaca":["Cocina caliente","Verduras","Hojas verdes"],"rúcula":["Cocina caliente","Verduras","Hojas verdes"],
+  "cebolla":["Cocina caliente","Verduras","Cebollas"],"cebolla morada":["Cocina caliente","Verduras","Cebollas"],
+  "pimentón":["Cocina caliente","Verduras","Pimentones"],"pimiento":["Cocina caliente","Verduras","Pimentones"],
+  "zanahoria":["Cocina caliente","Verduras","Raíces"],"papa":["Cocina caliente","Verduras","Raíces"],"papas":["Cocina caliente","Verduras","Raíces"],
+  "zapallo":["Cocina caliente","Verduras","Raíces"],"betarraga":["Cocina caliente","Verduras","Raíces"],
+  "pollo":["Cocina caliente","Proteínas","Pollo"],"pechuga":["Cocina caliente","Proteínas","Pollo"],
+  "pechuga de pollo":["Cocina caliente","Proteínas","Pollo"],"muslo":["Cocina caliente","Proteínas","Pollo"],"trutro":["Cocina caliente","Proteínas","Pollo"],
+  "vacuno":["Cocina caliente","Proteínas","Vacuno"],"lomo":["Cocina caliente","Proteínas","Vacuno"],
+  "filete":["Cocina caliente","Proteínas","Vacuno"],"asado":["Cocina caliente","Proteínas","Vacuno"],"osobuco":["Cocina caliente","Proteínas","Vacuno"],
+  "salmón":["Cocina caliente","Proteínas","Salmón"],"salmon":["Cocina caliente","Proteínas","Salmón"],"trucha":["Cocina caliente","Proteínas","Salmón"],
+  "camarones":["Cocina caliente","Proteínas","Mariscos"],"choritos":["Cocina caliente","Proteínas","Mariscos"],"almejas":["Cocina caliente","Proteínas","Mariscos"],
+  "cerdo":["Cocina caliente","Proteínas","Cerdo"],"costilla":["Cocina caliente","Proteínas","Cerdo"],"panceta":["Cocina caliente","Proteínas","Cerdo"],
+  "huevo":["Cocina caliente","Proteínas","Huevos"],"huevos":["Cocina caliente","Proteínas","Huevos"],
+  "leche":["Pastelería","Lácteos","Leche"],"queso":["Pastelería","Lácteos","Quesos"],"queso fresco":["Pastelería","Lácteos","Quesos"],
+  "mantequilla":["Pastelería","Lácteos","Mantequilla"],"crema":["Pastelería","Lácteos","Cremas"],"crema de leche":["Pastelería","Lácteos","Cremas"],
+  "yogur":["Desayuno","Lácteos","Yogures"],
+  "limón":["Barra","Frutas","Cítricos"],"limon":["Barra","Frutas","Cítricos"],"naranja":["Barra","Frutas","Cítricos"],"pomelo":["Barra","Frutas","Cítricos"],
+  "frutillas":["Pastelería","Frutas","Frutas rojas"],"fresas":["Pastelería","Frutas","Frutas rojas"],"frambuesas":["Pastelería","Frutas","Frutas rojas"],
+  "piña":["Pastelería","Frutas","Tropicales"],"mango":["Pastelería","Frutas","Tropicales"],"maracuyá":["Pastelería","Frutas","Tropicales"],
+  "manzana":["Desayuno","Frutas","Frutas rojas"],"pera":["Desayuno","Frutas","Tropicales"],"plátano":["Desayuno","Frutas","Tropicales"],
+  "harina":["Pastelería","Panadería","Harinas"],"harina de trigo":["Pastelería","Panadería","Harinas"],
+  "azúcar":["Pastelería","Panadería","Azúcares"],"azucar":["Pastelería","Panadería","Azúcares"],
+  "pan":["Desayuno","Panadería","Panes"],"marraqueta":["Desayuno","Panadería","Panes"],"hallulla":["Desayuno","Panadería","Panes"],
+  "aceite":["Cocina caliente","Abarrotes","Aceites"],"aceite de oliva":["Cocina caliente","Abarrotes","Aceites"],
+  "arroz":["Bodega general","Abarrotes","Granos"],"fideos":["Bodega general","Abarrotes","Pastas"],"pasta":["Bodega general","Abarrotes","Pastas"],
+  "sal":["Bodega general","Abarrotes","Condimentos"],"pimienta":["Bodega general","Abarrotes","Condimentos"],"ajo":["Bodega general","Abarrotes","Condimentos"],
+  "cerveza":["Barra","Bebidas","Cervezas"],"vino":["Barra","Bebidas","Vinos"],"vino tinto":["Barra","Bebidas","Vinos"],"vino blanco":["Barra","Bebidas","Vinos"],
+  "agua":["Barra","Bebidas","Aguas"],"agua mineral":["Barra","Bebidas","Aguas"],
+  "jugo":["Barra","Bebidas","Jugos"],"néctar":["Barra","Bebidas","Jugos"],
+  "servilletas":["Bodega general","Desechables","Papel"],"vasos":["Bodega general","Desechables","Vasos"],
+  "bolsas":["Bodega general","Desechables","Bolsas"],"envases":["Bodega general","Desechables","Envases"],
+  "detergente":["Bodega general","Limpieza","Detergentes"],"cloro":["Bodega general","Limpieza","Desinfectantes"],
+  "esponja":["Bodega general","Limpieza","Utensilios"],"guantes":["Bodega general","Limpieza","Utensilios"]
+};
+
+/* ── ESTADO ── */
+let DB       = JSON.parse(localStorage.getItem('cc_db')    || '[]');
+let TAXES    = JSON.parse(localStorage.getItem('cc_taxes') || 'null') || JSON.parse(JSON.stringify(TAXES_DEFAULT));
+let extraCat = JSON.parse(localStorage.getItem('cc_extra') || '{}');
+
+let imgData=null, manItems=[], iaItems=[], fProv='', fFecha=new Date().toISOString().split('T')[0], step='choose', prevPage=null;
+
+function saveDB()    { localStorage.setItem('cc_db',    JSON.stringify(DB)); }
+function saveTaxes() { localStorage.setItem('cc_taxes', JSON.stringify(TAXES)); }
+function saveExtra() { localStorage.setItem('cc_extra', JSON.stringify(extraCat)); }
+
+/* ── HELPERS ── */
+function lookup(name) {
+  const k = name.toLowerCase().trim()
+    .replace(/\s*cal\s*\d+/g,'').replace(/\s+\d+\s*(kg|g|lt?|un)/g,'')
+    .replace(/\b(grande|chico|mediano|premium|x\d+)\b/g,'').trim();
+  if (CAT_MAP[k])    return CAT_MAP[k];
+  if (extraCat[k])   return extraCat[k];
+  for (const ek of Object.keys({...CAT_MAP,...extraCat})) {
+    if (k.includes(ek) || ek.includes(k)) return CAT_MAP[ek] || extraCat[ek];
+  }
+  return null;
+}
+
+function getTax(subcat) {
+  for (const g of Object.values(TAXES))
+    for (const t of g)
+      if (t.cats && t.cats.includes(subcat)) return t;
+  return TAXES.general[0];
+}
+
+function calcCosts(pu, qty, subcat) {
+  const tax  = getTax(subcat);
+  const neto = Math.round(pu * qty);
+  const ivaA = Math.round(neto * tax.iva / 100);
+  const adA  = Math.round(neto * tax.ad  / 100);
+  return { neto, ivaAmt:ivaA, adAmt:adA, total:neto+ivaA+adA, tax };
+}
+
+function fmt(n)    { return '$' + Math.round(n).toLocaleString('es-CL'); }
+function fmtP(n)   { return n % 1 === 0 ? n + '%' : n.toFixed(1) + '%'; }
+function wk(d) {
+  const dt=new Date(d), m=new Date(dt);
+  m.setDate(dt.getDate()-dt.getDay()+1);
+  return m.toLocaleDateString('es-CL',{day:'2-digit',month:'short'});
+}
+
+/* ── NAVEGACIÓN ── */
+const META = {
+  home:      ['Resumen','Control de costos'],
+  facturas:  ['Facturas','Todas las entradas'],
+  nueva:     ['Nueva factura','Ingresar compra'],
+  reportes:  ['Reportes','Análisis de gastos'],
+  impuestos: ['Impuestos','Tasas SII Chile · Art. 42']
+};
+
+function go(page, btn) {
+  prevPage = null;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.bnav').forEach(b => b.classList.remove('on'));
+  document.getElementById('pg-'+page).classList.add('on');
+  if (btn) btn.classList.add('on');
+  document.getElementById('scroll').scrollTop = 0;
+  const [t,s] = META[page] || ['',''];
+  document.getElementById('tb-title').textContent = t;
+  document.getElementById('tb-sub').textContent   = s;
+  document.getElementById('back-btn').style.display = 'none';
+  document.getElementById('tb-act').style.display   = 'none';
+  if (page==='home')      renderHome();
+  else if (page==='facturas')  renderFacturas();
+  else if (page==='nueva')     { step='choose'; manItems=[]; iaItems=[]; imgData=null; fProv=''; renderNueva(); }
+  else if (page==='reportes')  renderReportes();
+  else if (page==='impuestos') renderImpuestos();
+}
+
+function showBack(from) {
+  prevPage = from;
+  document.getElementById('back-btn').style.display = 'flex';
+}
+
+function goBack() {
+  if (prevPage) {
+    const idx = ['home','facturas','nueva','reportes','impuestos'].indexOf(prevPage);
+    go(prevPage, document.querySelectorAll('.bnav')[idx]);
+    prevPage = null;
+  }
+}
+
+/* ── HOME ── */
+function renderHome() {
+  const total   = DB.reduce((s,f) => s+f.totalConImp, 0);
+  const neto    = DB.reduce((s,f) => s+f.totalNeto, 0);
+  const impTot  = DB.reduce((s,f) => s+(f.totalConImp-f.totalNeto), 0);
+  const now     = new Date();
+  const week    = DB.filter(f => (now-new Date(f.fecha)) < 7*864e5).reduce((s,f)=>s+f.totalConImp,0);
+  const catT    = {};
+  DB.forEach(f => f.items.forEach(it => {
+    const c = it.cat||'Sin cat'; catT[c] = (catT[c]||0) + it.costs.total;
+  }));
+  const top = Object.entries(catT).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const max = top[0]?.[1] || 1;
+  document.getElementById('pg-home').innerHTML = `
+    <div class="met-row">
+      <div class="met"><div class="met-l">Gasto total (c/imp)</div><div class="met-v">${fmt(total)}</div><div class="met-s">Neto: ${fmt(neto)}</div></div>
+      <div class="met"><div class="met-l">Esta semana</div><div class="met-v">${fmt(week)}</div></div>
+    </div>
+    <div class="met-row">
+      <div class="met"><div class="met-l">Facturas</div><div class="met-v">${DB.length}</div></div>
+      <div class="met"><div class="met-l">Impuestos pagados</div><div class="met-v" style="color:#a32d2d">${fmt(impTot)}</div></div>
+    </div>
+    <button class="fab" onclick="go('nueva',document.querySelectorAll('.bnav')[2])"><i class="ti ti-plus"></i>Ingresar nueva factura</button>
+    <div class="slbl">Top categorías</div>
+    <div class="card cp">
+      ${top.length ? top.map(([c,v])=>`
+        <div class="bar-row">
+          <div class="bar-lbl">${c}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/max*100)}%"></div></div>
+          <div class="bar-val">${fmt(v)}</div>
+        </div>`).join('') : '<div style="text-align:center;padding:20px;font-size:13px;color:#999">Sin datos aún — ingresa tu primera factura</div>'}
+    </div>
+    <div class="slbl">Últimas facturas</div>
+    <div class="card">
+      ${DB.length ? DB.slice(-5).reverse().map((f,i) => `
+        <div class="row" onclick="verFactura(${DB.length-1-i},'home')" style="cursor:pointer">
+          <div style="width:8px;height:8px;border-radius:50%;background:#1d9e75;flex-shrink:0"></div>
+          <div class="row-info"><div class="row-t">${f.prov}</div><div class="row-s">${f.fecha} · ${f.items.length} productos</div></div>
+          <div class="row-r"><div class="row-amt">${fmt(f.totalConImp)}</div>${f.totalConImp>f.totalNeto?`<div style="font-size:11px;color:#a32d2d">Neto: ${fmt(f.totalNeto)}</div>`:''}</div>
+          <i class="ti ti-chevron-right chev"></i>
+        </div>`).join('') : '<div style="text-align:center;padding:24px;font-size:13px;color:#999">Sin facturas aún</div>'}
+    </div>`;
+}
+
+/* ── FACTURAS ── */
+function renderFacturas() {
+  const el = document.getElementById('pg-facturas');
+  if (!DB.length) {
+    el.innerHTML = `<div class="empty"><i class="ti ti-file-invoice"></i><p>No hay facturas aún</p><button class="fab" onclick="go('nueva',document.querySelectorAll('.bnav')[2])"><i class="ti ti-plus"></i>Ingresar primera factura</button></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="card">${DB.slice().reverse().map((f,ri) => {
+    const i = DB.length-1-ri;
+    const hasImp = f.totalConImp > f.totalNeto;
+    return `<div class="row" onclick="verFactura(${i},'facturas')" style="cursor:pointer">
+      <div style="width:8px;height:8px;border-radius:50%;background:#1d9e75;flex-shrink:0"></div>
+      <div class="row-info"><div class="row-t">${f.prov}</div>
+      <div class="row-s">${f.fecha} · ${f.items.length} ítems · <span class="badge ${f.src==='ia'?'bg':'bb'}">${f.src==='ia'?'IA':'Manual'}</span></div></div>
+      <div class="row-r"><div class="row-amt">${fmt(f.totalConImp)}</div>${hasImp?`<div style="font-size:11px;color:#a32d2d">+${fmt(f.totalConImp-f.totalNeto)} imp.</div>`:''}</div>
+      <i class="ti ti-chevron-right chev"></i>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function verFactura(i, from) {
+  const f = DB[i];
+  showBack(from);
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById('pg-facturas').classList.add('on');
+  document.getElementById('tb-title').textContent = f.prov;
+  document.getElementById('tb-sub').textContent   = f.fecha;
+  const tbact = document.getElementById('tb-act');
+  tbact.style.display = 'block'; tbact.textContent = 'Eliminar'; tbact.style.color = '#a32d2d';
+  tbact.onclick = () => { if (confirm('¿Eliminar esta factura?')) { DB.splice(i,1); saveDB(); goBack(); } };
+  document.getElementById('scroll').scrollTop = 0;
+  document.getElementById('pg-facturas').innerHTML = `
+    <div class="info-box"><i class="ti ti-receipt-tax" style="font-size:16px;flex-shrink:0;margin-top:1px"></i>
+    <span>Costos con IVA e impuestos adicionales según categoría SII.</span></div>
+    <div class="card">
+      ${f.items.map(it => {
+        const c = it.costs; const hasAd = c.adAmt > 0;
+        return `<div class="res-item">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+            <div style="flex:1"><div class="res-name">${it.nombre}</div>
+            <div class="res-path">${it.area||'?'} → ${it.cat||'?'} → ${it.sub2||'?'}</div>
+            ${hasAd?`<span class="tax-pill">+${fmtP(c.tax.ad)} ${c.tax.tipo}</span>`:`<span class="tax-pill none">IVA 19%</span>`}
+            </div>
+          </div>
+          <div class="res-bottom">
+            <div style="font-size:12px;color:#999">${it.qty} × ${fmt(it.pu)} neto</div>
+            <div style="text-align:right"><div class="res-price">${fmt(c.total)}</div>
+            ${hasAd?`<div style="font-size:11px;color:#999">Neto: ${fmt(c.neto)}</div>`:''}</div>
+          </div>
+        </div>`;
+      }).join('')}
+      <div class="total-row">
+        <div><div class="total-lbl">Total c/impuestos</div>
+        ${f.totalConImp>f.totalNeto?`<div style="font-size:11px;color:#999">Neto: ${fmt(f.totalNeto)} · Imp: ${fmt(f.totalConImp-f.totalNeto)}</div>`:''}
+        </div>
+        <div class="total-v">${fmt(f.totalConImp)}</div>
+      </div>
+    </div>`;
+}
+
+/* ── NUEVA FACTURA ── */
+function renderNueva() {
+  document.getElementById('tb-title').textContent = 'Nueva factura';
+  document.getElementById('tb-sub').textContent   = 'Ingresar compra';
+  const el = document.getElementById('pg-nueva');
+
+  if (step === 'choose') {
+    el.innerHTML = `
+      <div class="ff"><label>Proveedor *</label><input id="np" placeholder="Ej: Mayorista 10, La Vega..." value="${fProv}" oninput="fProv=this.value"></div>
+      <div class="ff"><label>Fecha *</label><input type="date" id="nf" value="${fFecha}" oninput="fFecha=this.value"></div>
+      <div class="slbl">¿Cómo ingresas los productos?</div>
+      <button class="btn-out" onclick="startCam()"><i class="ti ti-camera"></i>
+        <div><div style="font-weight:500">Fotografiar factura</div><div style="font-size:12px;color:#888">La IA lee y clasifica automáticamente</div></div>
+      </button>
+      <button class="btn-out" onclick="startGal()"><i class="ti ti-photo"></i>
+        <div><div style="font-weight:500">Subir desde galería</div><div style="font-size:12px;color:#888">Imagen guardada en el dispositivo</div></div>
+      </button>
+      <button class="btn-out" onclick="startMan()"><i class="ti ti-pencil"></i>
+        <div><div style="font-weight:500">Ingresar manualmente</div><div style="font-size:12px;color:#888">Producto por producto</div></div>
+      </button>`;
+
+  } else if (step === 'ia-load') {
+    el.innerHTML = `
+      <div class="ai-load"><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <span>Analizando con IA y calculando impuestos...</span></div>
+      ${imgData ? `<img src="${imgData}" style="width:100%;border-radius:10px;border:0.5px solid #e0e0e0">` : ''}`;
+
+  } else if (step === 'ia-result') {
+    const uncat = iaItems.filter(it => !it.ok).length;
+    const total  = iaItems.reduce((s,it) => s+it.costs.total, 0);
+    const neto   = iaItems.reduce((s,it) => s+it.costs.neto,  0);
+    el.innerHTML = `
+      ${imgData ? `<img src="${imgData}" style="width:100%;border-radius:10px;border:0.5px solid #e0e0e0;margin-bottom:10px">` : ''}
+      ${uncat ? `<div class="warn-box"><i class="ti ti-alert-triangle" style="flex-shrink:0"></i>
+        ${uncat} producto(s) sin clasificar. Asigna su categoría para calcular impuestos correctamente.</div>` : ''}
+      <div class="card" style="margin-bottom:10px">
+        ${iaItems.map((it,i) => {
+          const c=it.costs; const hasAd=c.adAmt>0;
+          return `<div class="res-item">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <div style="flex:1"><div class="res-name">${it.nombre}</div>
+              <div class="res-path">${it.area} → ${it.cat} → ${it.sub2}</div>
+              ${hasAd?`<span class="tax-pill">+${fmtP(c.tax.ad)} ${c.tax.tipo}</span>`:`<span class="tax-pill none">IVA 19%</span>`}</div>
+              <span class="badge ${it.ok?'bg':'ba'}" style="flex-shrink:0">${it.ok?'OK':'Revisar'}</span>
+            </div>
+            ${!it.ok ? `<select style="font-size:12px;padding:6px 8px;border-radius:7px;border:0.5px solid #ddd;background:#fff;color:#1a1a1a;font-family:inherit;margin-top:8px;width:100%" onchange="reclasIA(${i},this.value)">
+              <option value="">Asignar categoría...</option>
+              <option>Proteínas</option><option>Verduras</option><option>Frutas</option>
+              <option>Lácteos</option><option>Panadería</option><option>Abarrotes</option>
+              <option>Bebidas</option><option>Desechables</option><option>Limpieza</option>
+            </select>` : ''}
+            <div class="res-bottom">
+              <div style="font-size:12px;color:#999">${it.qty} × ${fmt(it.pu)} neto</div>
+              <div style="text-align:right"><div class="res-price">${fmt(c.total)}</div>
+              ${hasAd?`<div style="font-size:11px;color:#999">Neto: ${fmt(c.neto)}</div>`:''}</div>
+            </div>
+          </div>`;
+        }).join('')}
+        <div class="total-row">
+          <div><div class="total-lbl">Total c/impuestos</div>
+          <div style="font-size:11px;color:#999">Neto: ${fmt(neto)} · Imp: ${fmt(total-neto)}</div></div>
+          <div class="total-v">${fmt(total)}</div>
+        </div>
+      </div>
+      <button class="fab" onclick="guardarIA()"><i class="ti ti-check"></i>Guardar factura</button>
+      <button class="btn-out" style="justify-content:center" onclick="step='choose';renderNueva()">
+        <i class="ti ti-x"></i>Cancelar</button>`;
+
+  } else if (step === 'manual') {
+    const tot  = manItems.reduce((s,it) => s+it.costs.total, 0);
+    const neto = manItems.reduce((s,it) => s+it.costs.neto,  0);
+    el.innerHTML = `
+      <div class="card cp" style="margin-bottom:10px">
+        <div class="ff" style="margin-bottom:8px"><label>Nombre del producto</label>
+          <input id="mn" placeholder="Ej: Tomate cherry, Vacuno, Cerveza..." oninput="hintCat()"></div>
+        <div id="cat-hint" class="hint" style="color:#0f6e56"></div>
+        <div id="tax-hint" class="hint" style="color:#a32d2d;margin-top:-8px"></div>
+        <div class="g2" style="margin-bottom:10px">
+          <div class="ff" style="margin:0"><label>Cantidad</label><input id="mq" type="number" placeholder="1" min="0.01" step="0.01"></div>
+          <div class="ff" style="margin:0"><label>Precio neto (sin IVA)</label><input id="mp" type="number" placeholder="0" oninput="hintCat()"></div>
+        </div>
+        <button class="fab" style="margin:0;height:44px;font-size:14px" onclick="addMan()">
+          <i class="ti ti-plus"></i>Agregar producto</button>
+      </div>
+      ${manItems.length ? `
+        <div class="slbl">Productos agregados (${manItems.length})</div>
+        <div class="card cp" style="margin-bottom:10px">
+          ${manItems.map((it,i) => {
+            const hasAd = it.costs.adAmt > 0;
+            return `<div class="chip">
+              <div><div style="font-weight:500">${it.nombre}</div>
+              <div style="font-size:11px;color:#888">${it.cat}${hasAd?` · <span style="color:#a32d2d">+${fmtP(it.costs.tax.ad)}</span>`:''} · ${fmt(it.costs.total)}</div></div>
+              <button class="chip-del" onclick="delMan(${i})"><i class="ti ti-x"></i></button>
+            </div>`;
+          }).join('')}
+          <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:0.5px solid #f0f0f0;font-size:13px">
+            <span style="color:#666">Total c/imp · Neto: ${fmt(neto)}</span>
+            <span style="font-weight:500">${fmt(tot)}</span>
+          </div>
+        </div>
+        <button class="fab" onclick="guardarMan()"><i class="ti ti-check"></i>Guardar factura</button>` : ''}`;
+
+  } else if (step === 'ok') {
+    el.innerHTML = `<div class="empty">
+      <i class="ti ti-circle-check" style="color:#1d9e75"></i>
+      <p style="font-weight:500;font-size:16px;color:#1a1a1a">Factura guardada</p>
+      <p>Costos e impuestos registrados correctamente.</p>
+      <button class="fab" style="margin-top:16px" onclick="go('home',document.querySelectorAll('.bnav')[0])">
+        <i class="ti ti-home"></i>Ver resumen</button>
+      <button class="btn-out" style="justify-content:center" onclick="step='choose';manItems=[];iaItems=[];renderNueva()">
+        <i class="ti ti-plus"></i>Ingresar otra factura</button>
+    </div>`;
+  }
+}
+
+function chkProv() {
+  const p = document.getElementById('np')?.value || fProv;
+  if (!p.trim()) { alert('Ingresa el nombre del proveedor primero'); return false; }
+  fProv  = p;
+  fFecha = document.getElementById('nf')?.value || fFecha;
+  return true;
+}
+function startCam() {
+  if (!chkProv()) return;
+  const f = document.getElementById('file-in');
+  f.setAttribute('capture','environment'); f.click();
+}
+function startGal() {
+  if (!chkProv()) return;
+  const f = document.getElementById('file-in');
+  f.removeAttribute('capture'); f.click();
+}
+function startMan() {
+  if (!chkProv()) return;
+  step = 'manual'; renderNueva();
+}
+
+function onFile(input) {
+  const file = input.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => { imgData=e.target.result; step='ia-load'; renderNueva(); analizarIA(); };
+  r.readAsDataURL(file); input.value='';
+}
+
+async function analizarIA() {
+  try {
+    const b64 = imgData.split(',')[1];
+    const mt  = imgData.split(';')[0].replace('data:','');
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-20250514", max_tokens:1500,
+        messages:[{ role:"user", content:[
+          { type:"image", source:{ type:"base64", media_type:mt, data:b64 }},
+          { type:"text",  text:`Analiza esta imagen de factura o boleta de compra para restaurante. Extrae TODOS los productos con su cantidad y precio unitario NETO (sin IVA). Si el precio incluye IVA, divídelo por 1.19. Responde SOLO JSON sin backticks ni texto adicional:\n{"items":[{"nombre":"NOMBRE_EXACTO_FACTURA","qty":1,"pu":1000}]}` }
+        ]}]
+      })
+    });
+    const data = await resp.json();
+    const txt  = data.content.map(c => c.text||'').join('');
+    const parsed = JSON.parse(txt.replace(/```json|```/g,'').trim());
+    iaItems = parsed.items.map(it => {
+      const found = lookup(it.nombre);
+      const sub2  = found?.[2] || 'General';
+      return { ...it, area:found?.[0]||'Sin clasificar', cat:found?.[1]||'Sin clasificar', sub2, ok:!!found, costs:calcCosts(it.pu, it.qty, sub2) };
+    });
+    step = 'ia-result'; renderNueva();
+  } catch(e) {
+    document.getElementById('pg-nueva').innerHTML = `
+      <div class="err-box"><i class="ti ti-alert-circle"></i> No se pudo leer la imagen. Intenta con mejor iluminación o usa el ingreso manual.<br><small style="opacity:.7">${e.message}</small></div>
+      <button class="btn-out" style="justify-content:center" onclick="step='choose';renderNueva()"><i class="ti ti-arrow-left"></i>Volver</button>`;
+  }
+}
+
+function reclasIA(i, cat) {
+  if (!cat) return;
+  iaItems[i].cat=cat; iaItems[i].area='Cocina caliente'; iaItems[i].sub2=cat; iaItems[i].ok=true;
+  extraCat[iaItems[i].nombre.toLowerCase().trim()] = ['Cocina caliente', cat, cat];
+  iaItems[i].costs = calcCosts(iaItems[i].pu, iaItems[i].qty, cat);
+  saveExtra(); renderNueva();
+}
+
+function guardarIA() {
+  const neto  = iaItems.reduce((s,it) => s+it.costs.neto,  0);
+  const total = iaItems.reduce((s,it) => s+it.costs.total, 0);
+  DB.push({ prov:fProv, fecha:fFecha, totalNeto:neto, totalConImp:total, src:'ia',
+    items: iaItems.map(it => ({ nombre:it.nombre, qty:it.qty, pu:it.pu, area:it.area, cat:it.cat, sub2:it.sub2, costs:it.costs })) });
+  saveDB(); step='ok'; renderNueva();
+}
+
+function hintCat() {
+  const n = document.getElementById('mn')?.value || '';
+  const p = parseFloat(document.getElementById('mp')?.value) || 0;
+  const found = lookup(n);
+  const hc = document.getElementById('cat-hint');
+  const ht = document.getElementById('tax-hint');
+  if (!hc || !ht) return;
+  if (found) {
+    const tax = getTax(found[2]);
+    hc.innerHTML = `<i class="ti ti-check" style="vertical-align:-2px"></i> ${found[0]} → ${found[1]} → ${found[2]}`;
+    if (tax.ad>0 && p>0) { const ad=Math.round(p*tax.ad/100); ht.innerHTML=`<i class="ti ti-receipt-tax" style="vertical-align:-2px"></i> +${fmtP(tax.ad)} ${tax.tipo} = ${fmt(ad)} extra por unidad`; }
+    else if (tax.ad>0)    { ht.innerHTML=`<i class="ti ti-receipt-tax" style="vertical-align:-2px"></i> Tiene impuesto adicional de ${fmtP(tax.ad)}`; }
+    else                  { ht.innerHTML=''; }
+  } else {
+    hc.innerHTML = n.length>2 ? '<span style="color:#854f0b"><i class="ti ti-question-mark" style="vertical-align:-2px"></i> No en catálogo — se aplicará IVA normal</span>' : '';
+    ht.innerHTML = '';
+  }
+}
+
+function addMan() {
+  const n = document.getElementById('mn')?.value.trim();
+  const q = parseFloat(document.getElementById('mq')?.value) || 1;
+  const p = parseFloat(document.getElementById('mp')?.value) || 0;
+  if (!n) { alert('Ingresa el nombre del producto'); return; }
+  const found = lookup(n);
+  const sub2  = found?.[2] || 'General';
+  manItems.push({ nombre:n, qty:q, pu:p, area:found?.[0]||'Sin clasificar', cat:found?.[1]||'Sin clasificar', sub2, costs:calcCosts(p,q,sub2) });
+  renderNueva();
+}
+function delMan(i) { manItems.splice(i,1); renderNueva(); }
+
+function guardarMan() {
+  if (!manItems.length) { alert('Agrega al menos un producto'); return; }
+  const neto  = manItems.reduce((s,it) => s+it.costs.neto,  0);
+  const total = manItems.reduce((s,it) => s+it.costs.total, 0);
+  DB.push({ prov:fProv, fecha:fFecha, totalNeto:neto, totalConImp:total, src:'manual', items:[...manItems] });
+  saveDB(); step='ok'; renderNueva();
+}
+
+/* ── REPORTES ── */
+function renderReportes() {
+  const catT={}, areaT={}, wkT={}, impT={};
+  let totalNeto=0, totalImp=0;
+  DB.forEach(f => {
+    const w = wk(f.fecha); wkT[w]=(wkT[w]||0)+f.totalConImp;
+    totalNeto += f.totalNeto; totalImp += (f.totalConImp-f.totalNeto);
+    f.items.forEach(it => {
+      const c=it.cat||'Sin cat', a=it.area||'Sin área';
+      catT[c]=(catT[c]||0)+it.costs.total;
+      areaT[a]=(areaT[a]||0)+it.costs.total;
+      if (it.costs.adAmt>0) { const tk=it.costs.tax.nombre; impT[tk]=(impT[tk]||0)+it.costs.adAmt; }
+    });
+  });
+  const catR  = Object.entries(catT).sort((a,b)=>b[1]-a[1]);
+  const areaR = Object.entries(areaT).sort((a,b)=>b[1]-a[1]);
+  const wkR   = Object.entries(wkT).sort((a,b)=>a[0]>b[0]?1:-1).slice(-6);
+  const impR  = Object.entries(impT).sort((a,b)=>b[1]-a[1]);
+  const maxW  = Math.max(...wkR.map(r=>r[1]),1);
+  const maxC  = catR[0]?.[1]||1;
+  const totAll= catR.reduce((s,[,v])=>s+v,0)||1;
+  document.getElementById('pg-reportes').innerHTML = !DB.length ? `<div class="empty"><i class="ti ti-chart-bar"></i><p>Sin datos aún</p></div>` : `
+    <div class="met-row">
+      <div class="met"><div class="met-l">Costo neto total</div><div class="met-v">${fmt(totalNeto)}</div></div>
+      <div class="met"><div class="met-l">Impuestos pagados</div><div class="met-v" style="color:#a32d2d">${fmt(totalImp)}</div>
+        <div class="met-s">${totalNeto>0?Math.round(totalImp/totalNeto*100):0}% sobre neto</div></div>
+    </div>
+    ${impR.length ? `<div class="slbl">Impuestos por tipo</div>
+    <div class="card">
+      ${impR.map(([n,v])=>`<div class="row"><div class="row-info"><div class="row-t">${n}</div></div><div class="row-r" style="color:#a32d2d;font-weight:500">${fmt(v)}</div></div>`).join('')}
+    </div>` : ''}
+    <div class="slbl">Gasto semanal (con impuestos)</div>
+    <div class="card cp">
+      <div style="display:flex;align-items:flex-end;gap:6px;height:90px;padding-bottom:8px">
+        ${wkR.map(([w,v])=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="width:100%;background:#1d9e75;border-radius:4px 4px 0 0;height:${Math.round(v/maxW*70)}px;min-height:4px"></div>
+            <div style="font-size:10px;color:#999;text-align:center;line-height:1.2">${w}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="slbl">Por categoría</div>
+    <div class="card cp">
+      ${catR.map(([c,v])=>`
+        <div class="bar-row">
+          <div class="bar-lbl">${c}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxC*100)}%"></div></div>
+          <div class="bar-val">${fmt(v)}</div>
+        </div>`).join('')}
+    </div>
+    <div class="slbl">Por área de cocina</div>
+    <div class="card">
+      ${areaR.map(([a,v])=>`
+        <div class="row"><div class="row-info"><div class="row-t">${a}</div></div>
+        <div class="row-r"><div class="row-amt">${fmt(v)}</div>
+        <div style="font-size:11px;color:#999">${Math.round(v/totAll*100)}%</div></div></div>`).join('')}
+    </div>`;
+}
+
+/* ── IMPUESTOS ── */
+function renderImpuestos() {
+  const groups = [
+    {key:'general', label:'Impuestos generales'},
+    {key:'bebidas', label:'Bebidas y alcohol'},
+    {key:'carnes',  label:'Carnes y proteínas'}
+  ];
+  document.getElementById('pg-impuestos').innerHTML = `
+    <div class="info-box"><i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px"></i>
+    <span>Tasas según SII Chile. Toca una fila para editar. Los cambios se aplican desde la próxima factura.</span></div>
+    ${groups.map(g=>`<div class="slbl">${g.label}</div><div class="card" id="tc-${g.key}"></div>`).join('')}`;
+  groups.forEach(g => renderTaxGroup(g.key));
+}
+
+function renderTaxGroup(gk) {
+  const el = document.getElementById('tc-'+gk); if(!el) return;
+  el.innerHTML = TAXES[gk].map((t,i) => `
+    <div>
+      <div class="tax-row-edit" onclick="toggleTax('${gk}',${i})">
+        <div class="tax-icon" style="background:${t.ic}"><i class="ti ${t.icon}" style="color:${t.icol}"></i></div>
+        <div class="row-info"><div class="row-t">${t.nombre}</div><div class="row-s">${t.desc}</div></div>
+        <div style="text-align:right;flex-shrink:0;margin-left:8px">
+          <div style="font-weight:500;font-size:15px;color:${t.ad>0?'#a32d2d':'#0f6e56'}">${fmtP(t.iva+t.ad)}</div>
+          <div style="font-size:11px;color:#999">${t.tipo}</div>
+        </div>
+        <i class="ti ti-chevron-down chev" id="chev-${gk}-${i}"></i>
+      </div>
+      <div class="edit-panel" id="ep-${gk}-${i}">
+        <div style="font-size:11px;color:#999;margin-bottom:10px"><i class="ti ti-scale" style="vertical-align:-2px"></i> ${t.nota}</div>
+        <div class="rate-row">
+          <span class="rate-lbl">IVA base</span>
+          <input class="rate-input" type="number" value="${t.iva}" step="0.5" min="0" max="100"
+            onchange="updTax('${gk}',${i},'iva',this.value)">
+          <span style="font-size:13px;color:#888;margin-left:4px">%</span>
+        </div>
+        <div class="rate-row">
+          <span class="rate-lbl">${t.tipo==='anticipado'?'IVA anticipado':'Imp. adicional'}</span>
+          <input class="rate-input" type="number" value="${t.ad}" step="0.5" min="0" max="100"
+            onchange="updTax('${gk}',${i},'ad',this.value)">
+          <span style="font-size:13px;color:#888;margin-left:4px">%</span>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;font-size:12px;margin-top:4px">
+          <span style="color:#666">Carga total</span>
+          <span style="font-weight:500" id="tt-${gk}-${i}">${fmtP(t.iva+t.ad)}</span>
+        </div>
+        <button class="save-mini" onclick="saveTaxes();closeAllTax();alert('✓ Tasas guardadas')">
+          <i class="ti ti-check" style="vertical-align:-2px"></i> Guardar cambios
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+function toggleTax(gk,i) {
+  const ep=document.getElementById(`ep-${gk}-${i}`);
+  const ch=document.getElementById(`chev-${gk}-${i}`);
+  const open=ep.classList.contains('open');
+  closeAllTax();
+  if(!open){ep.classList.add('open');ch.style.transform='rotate(180deg)';}
+}
+function closeAllTax() {
+  document.querySelectorAll('.edit-panel').forEach(p=>p.classList.remove('open'));
+  document.querySelectorAll('[id^="chev-"]').forEach(c=>c.style.transform='');
+}
+function updTax(gk,i,field,val) {
+  TAXES[gk][i][field]=parseFloat(val)||0;
+  const el=document.getElementById(`tt-${gk}-${i}`);
+  if(el) el.textContent=fmtP(TAXES[gk][i].iva+TAXES[gk][i].ad);
+}
+
+/* ── INICIO ── */
+go('home', document.querySelectorAll('.bnav')[0]);
+</script>
+</body>
+</html>

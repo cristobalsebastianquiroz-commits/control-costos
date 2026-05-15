@@ -204,13 +204,42 @@ function todayStr()  { return new Date().toISOString().split('T')[0]; }
    HELPERS
    ════════════════════════════════ */
 function lookup(name){
-  const k=name.toLowerCase().trim()
-    .replace(/\s*cal\s*\d+/g,'').replace(/\s+\d+\s*(kg|g|lt?|un|und)/g,'')
-    .replace(/\b(grande|chico|mediano|premium|x\d+|kg|gr|lt|cc)\b/g,'').trim();
+  // Normalización agresiva para OCR: quitar ruido típico de facturas
+  const k = name.toLowerCase().trim()
+    // quitar calibres/tallas: cal 18, cal. 22, t/28, n°3
+    .replace(/\b(cal\.?\s*\d+|t\/\d+|n[°º]\s*\d+|talla\s*\d+)\b/g,'')
+    // quitar unidades con cantidad: 5kg, 2.5lt, 500gr
+    .replace(/\d+[.,]?\d*\s*(kg|kgs|gr?|g\b|lt?s?|cc|ml|un|und|pzas?|piezas?|caja|bolsa)/gi,'')
+    // quitar modificadores
+    .replace(/\b(grande|chico|mediano|premium|selecto|extra|super|mini|x\d+|sin\s+hueso|s\/h|c\/h|fresc[ao]|congeladx?)\b/gi,'')
+    // quitar prefijos numéricos sueltos: "03 pollo" → "pollo"
+    .replace(/^\d{1,3}\s+/,'')
+    // quitar códigos internos (5+ dígitos solos)
+    .replace(/\b\d{5,}\b/g,'')
+    // normalizar acentos para comparación
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s{2,}/g,' ').trim();
+
+  // Búsqueda exacta primero (con y sin acento)
   if(CAT[k]) return CAT[k];
   if(extraCat[k]) return extraCat[k];
-  for(const ek of Object.keys({...CAT,...extraCat}))
-    if(k.includes(ek)||ek.includes(k)) return CAT[ek]||extraCat[ek];
+
+  // Búsqueda en catálogo normalizando también las keys
+  const normKey = ek => ek.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  for(const ek of Object.keys({...CAT,...extraCat})){
+    const nk = normKey(ek);
+    if(k===nk || k.includes(nk) || nk.includes(k)) return CAT[ek]||extraCat[ek];
+  }
+
+  // Búsqueda por palabra clave individual (si el nombre tiene varias palabras)
+  const words = k.split(' ').filter(w=>w.length>3);
+  for(const w of words){
+    for(const ek of Object.keys({...CAT,...extraCat})){
+      const nk = normKey(ek);
+      if(nk===w || nk.startsWith(w) || w.startsWith(nk)) return CAT[ek]||extraCat[ek];
+    }
+  }
+
   return null;
 }
 function getTax(subcat){
@@ -232,82 +261,328 @@ function wk(d)   { const dt=new Date(d),m=new Date(dt); m.setDate(dt.getDate()-d
    OCR — PARSEO INTELIGENTE
    Lee texto de Tesseract y extrae productos + precios
    ════════════════════════════════ */
-function parseOCRText(text){
-  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>2);
+/* ════════════════════════════════════════════════════════
+   parseOCRText v2 — Parser inteligente de tablas de factura
+   ════════════════════════════════════════════════════════
+   Estrategia:
+   1. Detecta la zona de productos buscando encabezados de tabla
+      (descripción, artículo, ítem, detalle, producto, etc.)
+   2. Detecta columnas por posición horizontal de los tokens
+   3. La columna de texto más a la IZQUIERDA = descripción
+   4. Las columnas numéricas a la derecha = cantidad / precio
+   5. Ignora todo lo que esté fuera de la zona de productos
+   ════════════════════════════════════════════════════════ */
+function parseOCRText(rawText){
+
+  /* ── 1. LIMPIEZA INICIAL ── */
+  // Normalizar separadores OCR comunes: | → espacio, O→0 en contexto numérico
+  const normalize = s => s
+    .replace(/\r/g,'')
+    .replace(/\t/g,'  ')
+    .replace(/[|¡]/g,' ')
+    .replace(/(?<=\d)[oO](?=\d)/g,'0')   // OCR confunde O con 0 entre dígitos
+    .replace(/(?<=\d)[lI](?=\d)/g,'1')   // OCR confunde l/I con 1 entre dígitos
+    .replace(/\s{2,}/g,' ');
+
+  const text = normalize(rawText);
+  const allLines = text.split('\n');
+
+  /* ── 2. PATRONES BASE ── */
+
+  // Encabezados de columna descripción (cualquiera de estos detecta inicio de tabla)
+  const HEADER_DESC_RX = /\b(descrip\w*|articul\w*|artículo\w*|item\w*|ítem\w*|detalle\w*|producto\w*|nombre\w*|concepto\w*|mercader\w*|glosa\w*)\b/i;
+
+  // Encabezados de columna cantidad
+  const HEADER_QTY_RX  = /\b(cant\w*|qty\w*|unid\w*|bultos?|kilos?|kg\b)\b/i;
+
+  // Encabezados de columna precio
+  const HEADER_PRICE_RX = /\b(precio\w*|valor\w*|p\.?\s*unit\w*|p\.?\s*neto\w*|monto\w*|importe\w*)\b/i;
+
+  // Líneas que son DEFINITIVAMENTE ruido (encabezado/pie de documento)
+  const NOISE_RX = /^(rut\b|giro\b|direcci|fono|telef|email|@|www\.|n[°ºo]?\s*\d|folio|fecha\b|hora\b|caja\b|vendedor|cajero|turno|subtotal\b|sub[\s-]?total|neto\b|iva\b|exento|total\b|descuento|recargo|vuelto|efectivo|tarjeta|d[eé]bito|cr[eé]dito|propina|gracias|atendido|sucursal|local\b|cod\w*\s*\d|p[aá]gina\b|hoja\b)/i;
+
+  // Números que parecen precios chilenos (100 a 9.999.999)
+  const PRICE_TOKEN_RX = /^\$?(\d{1,3}(?:[.,]\d{3})+|\d{4,7})([.,]\d{1,2})?$/;
+
+  // Número pequeño que puede ser cantidad (0.1 a 999)
+  const QTY_TOKEN_RX   = /^(\d{1,3})([.,]\d{1,3})?$/;
+
+  /* ── 3. DETECTAR ZONA DE PRODUCTOS ── */
+  // Buscar la línea de encabezado de la tabla de productos
+  let headerLineIdx = -1;
+  let descColPos    = -1;   // posición X aproximada (índice de carácter) de columna descripción
+  let qtyColPos     = -1;
+  let priceColPos   = -1;
+
+  for(let i=0; i<allLines.length; i++){
+    const line = allLines[i];
+    const low  = line.toLowerCase();
+
+    if(HEADER_DESC_RX.test(low)){
+      headerLineIdx = i;
+
+      // Intentar ubicar columnas por posición de los tokens en el encabezado
+      const descM  = low.search(HEADER_DESC_RX);
+      const qtyM   = low.search(HEADER_QTY_RX);
+      const priceM = low.search(HEADER_PRICE_RX);
+
+      descColPos  = descM  >= 0 ? descM  : 0;
+      qtyColPos   = qtyM   >= 0 ? qtyM   : -1;
+      priceColPos = priceM >= 0 ? priceM : -1;
+      break;
+    }
+  }
+
+  /* ── 4. DETERMINAR RANGO DE LÍNEAS A PARSEAR ── */
+  // Si encontramos encabezado → parsear desde encabezado+1
+  // Si no encontramos → intentar con todas las líneas (modo fallback)
+  const startLine = headerLineIdx >= 0 ? headerLineIdx + 1 : 0;
+
+  // Detectar fin de tabla: primera línea que tenga palabras clave de total/pie
+  const END_RX = /\b(total\b|subtotal\b|sub[\s-]?total\b|neto\b|iva\b|exento\b|suma\b|gran\s*total\b)/i;
+  let endLine = allLines.length;
+  for(let i=startLine; i<allLines.length; i++){
+    if(END_RX.test(allLines[i]) && !/descrip|articul|item|product/i.test(allLines[i])){
+      endLine = i;
+      break;
+    }
+  }
+
+  const productLines = allLines.slice(startLine, endLine);
+
+  /* ── 5. EXTRAER TOKENS POR POSICIÓN ── */
+  // Para cada línea de producto, separar en tokens con su posición X
+  function tokenize(line){
+    const tokens = [];
+    let match;
+    const rx = /\S+/g;
+    while((match = rx.exec(line)) !== null){
+      tokens.push({ text: match[0], pos: match.index });
+    }
+    return tokens;
+  }
+
+  // Limpiar número: quitar $, puntos de miles, convertir coma decimal
+  function parseNum(s){
+    return parseFloat(
+      s.replace(/\$/g,'')
+       .replace(/\./g,'')
+       .replace(',','.')
+    );
+  }
+
+  function isPrice(s){ return PRICE_TOKEN_RX.test(s.replace(/\s/g,'')); }
+  function isQty(s)  { return QTY_TOKEN_RX.test(s.replace(/\s/g,'')); }
+  function isNoise(line){ return NOISE_RX.test(line.trim()); }
+
+  // Detectar si un token es "solo basura OCR"
+  function isGarbage(s){
+    return /^[_\-=*#+\\\/]{2,}$/.test(s) || /^[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ]{3,}$/.test(s);
+  }
+
+  /* ── 6. PARSEAR CADA LÍNEA DE PRODUCTO ── */
   const items = [];
 
-  // Normalizar: quitar caracteres raros del OCR
-  const clean = s => s.replace(/[|l1!]/g,'').replace(/\s+/g,' ').trim();
+  for(const rawLine of productLines){
+    const line = rawLine.trim();
+    if(!line || line.length < 3) continue;
+    if(isNoise(line)) continue;
+    if(isGarbage(line)) continue;
+    // Saltar líneas que son solo separadores o fechas
+    if(/^[-=_]{3,}/.test(line)) continue;
+    if(/^\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(line)) continue;
+    // Saltar si la línea completa es solo dígitos/puntos (código de barra, etc)
+    if(/^[\d\s.,]+$/.test(line) && line.replace(/[\s.,]/g,'').length > 5) continue;
 
-  // Patrones de precio chileno: 1.234 / 1234 / $1.234
-  const priceRx = /\$?\s*(\d{1,3}(?:[.,]\d{3})*|\d{4,7})(?:[.,]\d{1,2})?/g;
+    const tokens = tokenize(line);
+    if(!tokens.length) continue;
 
-  for(const line of lines){
-    const low = line.toLowerCase();
+    /* Separar tokens en: textuales y numéricos */
+    const numTokens  = tokens.filter(t => isPrice(t.text) || (isQty(t.text) && parseNum(t.text) <= 999));
+    const textTokens = tokens.filter(t => !isPrice(t.text) && /[a-zA-ZáéíóúñÁÉÍÓÚÑ]/.test(t.text));
 
-    // Saltar líneas de encabezado/pie típicas
-    if(/^(rut|giro|direcci|fonos?|fono|tel|email|@|neto|iva|total|subtotal|descuento|boleta|factura|ticket|fecha|hora|caja|vendedor|gracias|vuelto|efectivo|tarjeta|debito|crédito|credito|propina)/i.test(low)) continue;
-    if(/^\d{2}[\/-]\d{2}[\/-]\d{2,4}/.test(line)) continue; // fecha
-    if(line.length < 4) continue;
+    // Si no hay ningún token textual con letras → skip (línea de puros números)
+    if(!textTokens.length) continue;
 
-    // Buscar todos los números de precio en la línea
-    const prices = [];
-    let m;
-    const rx2 = /\$?\s*(\d{1,3}(?:[.,]\d{3})*|\d{4,7})(?:[.,]\d{1,2})?/g;
-    while((m=rx2.exec(line))!==null){
-      const num = parseInt(m[1].replace(/[.,]/g,''));
-      if(num>=100 && num<=9999999) prices.push(num);
+    /* ── Construir nombre desde tokens de texto ── */
+    // Si tenemos posición de columna descripción, preferir tokens cercanos a ella
+    let nameTokens = textTokens;
+    if(descColPos >= 0 && textTokens.length > 1){
+      // Ordenar por cercanía a descColPos y tomar los más cercanos
+      nameTokens = textTokens.filter(t => t.pos >= descColPos && t.pos < (priceColPos > 0 ? priceColPos : 999));
+      if(!nameTokens.length) nameTokens = textTokens;
     }
-    if(!prices.length) continue;
 
-    // El precio unitario suele ser el primero o el más grande
-    const pu = prices[prices.length-1]; // último suele ser precio unitario o total línea
-
-    // Extraer nombre: todo lo que no sea número/precio
-    let nombre = line
-      .replace(/\$?\s*\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?\s*/g,' ')
-      .replace(/\d+\s*(kg|gr?|lt?|cc|un|und|pza|piezas?)/gi,' ')
-      .replace(/\s+/g,' ').trim();
-
-    // Limpiar caracteres OCR comunes
-    nombre = nombre.replace(/[_\-=*#+|\\\/]{2,}/g,'').trim();
+    let nombre = nameTokens.map(t=>t.text).join(' ')
+      // Limpiar artefactos OCR frecuentes
+      .replace(/\b(kg|gr?|lt?|cc|un|und|pza|piezas?)\b/gi,' ')
+      .replace(/\bx\d+\b/gi,' ')
+      .replace(/\b\d{5,}\b/g,' ')      // códigos internos largos
+      .replace(/[_=*#+\\]{1,}/g,' ')
+      .replace(/\s{2,}/g,' ')
+      .trim();
 
     if(nombre.length < 3) continue;
     if(/^\d+$/.test(nombre)) continue;
 
-    // Detectar cantidad si viene al inicio (ej: "2 Tomate cherry 2500")
-    let qty=1;
-    const qtyM = nombre.match(/^(\d+)\s+(.+)/);
-    if(qtyM && parseInt(qtyM[1])<=99){
-      qty=parseInt(qtyM[1]);
-      nombre=qtyM[2];
+    /* ── Extraer cantidad y precio de tokens numéricos ── */
+    let qty = 1;
+    let pu  = 0;
+
+    // Estrategia: buscar qty al INICIO de línea o cerca de columna qty
+    // Buscar precio al FINAL de línea o cerca de columna precio
+
+    // Primer token numérico pequeño (<=999) al inicio = cantidad
+    const firstToken = tokens[0];
+    if(isQty(firstToken.text) && !isPrice(firstToken.text)){
+      const n = parseNum(firstToken.text);
+      if(n >= 1 && n <= 500){
+        qty = n;
+        // Si el segundo token también es numérico y grande → puede ser precio
+      }
     }
 
-    // Limpiar nombre final
-    nombre = nombre.replace(/^\W+|\W+$/g,'').trim();
-    if(nombre.length<3) continue;
+    // También detectar patrón "Nº cantidad" explícito al inicio del nombre
+    const qtyMatch = nombre.match(/^(\d{1,3}(?:[.,]\d{3})?)\s+(.{3,})/);
+    if(qtyMatch){
+      const candidate = parseNum(qtyMatch[1]);
+      if(candidate >= 1 && candidate <= 500 && !isPrice(qtyMatch[1])){
+        qty   = candidate;
+        nombre = qtyMatch[2].trim();
+      }
+    }
 
-    // Capitalizar primera letra
-    nombre = nombre.charAt(0).toUpperCase()+nombre.slice(1).toLowerCase();
+    // Precios: de todos los tokens que parecen precio, tomar el mayor
+    // (el total de línea, que luego dividimos por qty para obtener pu)
+    const priceNums = numTokens
+      .filter(t => isPrice(t.text))
+      .map(t => parseNum(t.text))
+      .filter(n => n >= 100 && n <= 9999999);
 
+    if(priceNums.length){
+      // Si hay un único precio → es el precio unitario
+      // Si hay dos precios y qty>1 → el menor es pu, el mayor es total
+      // Si hay dos precios y qty=1 → el mayor es precio con IVA, el menor es neto
+      priceNums.sort((a,b)=>a-b);
+      if(priceNums.length === 1){
+        pu = priceNums[0];
+        // Si qty > 1 y pu parece ser total → dividir
+        if(qty > 1 && pu / qty > 100 && pu / qty < 5000000){
+          // Ambiguo: guardamos pu tal cual; el usuario puede corregir
+        }
+      } else {
+        // Múltiples números: el más chico suele ser pu, el más grande el total línea
+        // Pero si son muy similares, es otro escenario
+        const min = priceNums[0];
+        const max = priceNums[priceNums.length-1];
+        if(qty > 1 && Math.abs(max - min*qty) < max*0.05){
+          // max ≈ min * qty → min es pu
+          pu = min;
+        } else {
+          // Tomar el segundo-a-último (precio unitario suele estar antes del total)
+          pu = priceNums.length >= 2 ? priceNums[priceNums.length-2] : min;
+        }
+      }
+    }
+
+    // Si precio es 0 y hay tokens que parecen precio → skip (no hay info útil)
+    if(pu === 0) continue;
+
+    /* ── Limpiar nombre final ── */
+    nombre = nombre
+      .replace(/^\W+|\W+$/g,'')
+      .replace(/\s{2,}/g,' ')
+      .trim();
+
+    // Capitalizar correctamente
+    nombre = nombre.split(' ').map(w=>{
+      if(w.length <= 2) return w.toLowerCase();
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    }).join(' ');
+
+    if(nombre.length < 3) continue;
+
+    /* ── Clasificar ── */
     const found = lookup(nombre);
-    const sub2  = found?.[2]||'General';
+    const sub2  = found?.[2] || 'General';
+
     items.push({
       nombre, qty, pu,
-      area:  found?.[0]||'Sin clasificar',
-      cat:   found?.[1]||'Sin clasificar',
-      sub2,  ok:!!found,
-      costs: calcCosts(pu,qty,sub2)
+      area:  found?.[0] || 'Sin clasificar',
+      cat:   found?.[1] || 'Sin clasificar',
+      sub2,
+      ok:    !!found,
+      costs: calcCosts(pu, qty, sub2)
     });
   }
 
-  // Deduplicar por nombre similar
-  const seen=new Set();
-  return items.filter(it=>{
-    const k=it.nombre.toLowerCase().slice(0,8);
+  /* ── 7. DEDUPLICAR ── */
+  // Eliminar duplicados por nombre (primeros 10 caracteres normalizados)
+  const seen = new Set();
+  const deduped = items.filter(it => {
+    const k = it.nombre.toLowerCase().replace(/\s/g,'').slice(0,10);
     if(seen.has(k)) return false;
-    seen.add(k);return true;
+    seen.add(k);
+    return true;
   });
+
+  /* ── 8. FALLBACK ── */
+  // Si el parser inteligente no encontró nada, intentar modo simple
+  if(!deduped.length){
+    return parseOCRFallback(rawText);
+  }
+
+  return deduped;
+}
+
+/* ════════════════════════════════════════════════════════
+   parseOCRFallback — modo simple línea por línea
+   Se usa cuando el parser de tabla no extrae nada
+   ════════════════════════════════════════════════════════ */
+function parseOCRFallback(text){
+  const SKIP = /^(rut|giro|direcci|fono|tel|email|@|neto|iva|total|subtotal|descuento|boleta|factura|ticket|fecha|hora|caja|vendedor|gracias|vuelto|efectivo|tarjeta|debito|crédito|credito|propina|n[°º]\s*\d)/i;
+  const items = [];
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>3);
+
+  for(const line of lines){
+    if(SKIP.test(line)) continue;
+    if(/^\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(line)) continue;
+    if(/^[-=_]{3,}/.test(line)) continue;
+
+    // Extraer precios de la línea
+    const priceRx = /\$?\s*(\d{1,3}(?:[.,]\d{3})+|\d{4,7})(?:[.,]\d{1,2})?/g;
+    const prices = [];
+    let m;
+    while((m=priceRx.exec(line))!==null){
+      const n = parseInt(m[1].replace(/[.,]/g,''));
+      if(n>=200 && n<=9999999) prices.push(n);
+    }
+    if(!prices.length) continue;
+
+    const pu = prices[prices.length-1];
+    let nombre = line
+      .replace(/\$?\s*\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?\s*/g,' ')
+      .replace(/\d+\s*(kg|gr?|lt?|cc|un|und)/gi,' ')
+      .replace(/[_=*#+|\\]{2,}/g,' ')
+      .replace(/\s+/g,' ').trim();
+
+    if(nombre.length < 3 || /^\d+$/.test(nombre)) continue;
+
+    let qty = 1;
+    const qm = nombre.match(/^(\d+)\s+(.+)/);
+    if(qm && parseInt(qm[1])<=99){ qty=parseInt(qm[1]); nombre=qm[2]; }
+
+    nombre = nombre.replace(/^\W+|\W+$/g,'').trim();
+    if(nombre.length < 3) continue;
+    nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
+
+    const found = lookup(nombre);
+    const sub2  = found?.[2]||'General';
+    items.push({ nombre, qty, pu, area:found?.[0]||'Sin clasificar', cat:found?.[1]||'Sin clasificar', sub2, ok:!!found, costs:calcCosts(pu,qty,sub2) });
+  }
+
+  const seen = new Set();
+  return items.filter(it=>{ const k=it.nombre.toLowerCase().slice(0,8); if(seen.has(k)) return false; seen.add(k); return true; });
 }
 
 /* ════════════════════════════════
@@ -517,6 +792,21 @@ function renderNueva(){
         </div>
         <button class="fab" onclick="guardarMan()"><i class="ti ti-check"></i>Guardar factura</button>`:''}`;
 
+  } else if(step==='ocr-debug'){
+    // No se detectaron productos — mostrar texto crudo para diagnóstico
+    const raw = (window._ocrDebugText||'').slice(0,1200);
+    el.innerHTML=`
+      <div class="warn-box"><i class="ti ti-alert-triangle" style="flex-shrink:0"></i>
+        <div><b>No se detectaron productos automáticamente.</b><br>
+        Revisa el texto que leyó el OCR abajo. Si la calidad es mala, intenta con mejor iluminación o ingresa manualmente.</div>
+      </div>
+      <div class="slbl">Texto detectado por OCR</div>
+      <div class="card cp" style="margin-bottom:10px">
+        <pre style="font-size:11px;color:#666;white-space:pre-wrap;line-height:1.6;max-height:280px;overflow-y:auto">${raw.replace(/</g,'&lt;')}</pre>
+      </div>
+      <button class="btn-scan" onclick="step='choose';renderNueva()"><i class="ti ti-camera"></i>Intentar de nuevo</button>
+      <button class="btn-out" onclick="step='manual';renderNueva()"><i class="ti ti-pencil"></i>Ingresar manualmente</button>`;
+
   } else if(step==='ok'){
     el.innerHTML=`<div class="empty">
       <i class="ti ti-circle-check" style="color:#1d9e75"></i>
@@ -609,12 +899,17 @@ function onFile(input){
     }
   }).then(({data:{text}})=>{
     URL.revokeObjectURL(url);
+    // Guardar texto crudo para debug
+    window._lastOCRText = text;
     scanItems=parseOCRText(text);
     if(!scanItems.length){
-      // Si no encontró nada, mostrar el texto crudo para que el usuario lo revise
-      scanItems=[{nombre:'Producto 1',qty:1,pu:0,area:'Sin clasificar',cat:'Sin clasificar',sub2:'General',ok:false,costs:calcCosts(0,1,'General')}];
+      // Mostrar texto OCR crudo para que el usuario entienda qué leyó
+      step='ocr-debug';
+      window._ocrDebugText = text;
+    } else {
+      step='scan-preview';
     }
-    step='scan-preview';renderNueva();
+    renderNueva();
   }).catch(e=>{
     step='choose';renderNueva();
     alert('Error al leer la imagen. Intenta con mejor iluminación o usa ingreso manual.');

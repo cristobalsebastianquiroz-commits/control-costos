@@ -189,6 +189,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .gauge-val{font-size:28px;font-weight:800;letter-spacing:-1px}
 .gauge-bar{height:10px;border-radius:5px;background:linear-gradient(to right,var(--r),var(--a),var(--g));margin:8px 0 4px;position:relative}
 .gauge-marker{position:absolute;top:-4px;width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--t1);transform:translateX(-50%);transition:left .4s ease}
+/* ── Destino cocina ── */
+.cocina-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin-bottom:12px}
+.cocina-tabs::-webkit-scrollbar{display:none}
+.ctab{flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--t2);white-space:nowrap;transition:all .12s}
+.ctab.on{color:#fff;border-color:transparent}
+.ctab:active{opacity:.8}
+/* ── Inventario ── */
+.inv-cocina-header{display:flex;align-items:center;gap:10px;padding:14px;border-bottom:1px solid var(--border2)}
+.inv-cocina-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.inv-categoria-lbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;padding:8px 14px 4px;background:var(--bg)}
+.inv-prod-row{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border2);gap:10px}
+.inv-prod-row:last-child{border-bottom:none}
+.inv-prod-info{flex:1;min-width:0}
+.inv-prod-name{font-size:13px;font-weight:700}
+.inv-prod-sub{font-size:11px;color:var(--t3);margin-top:1px}
+.inv-prod-right{text-align:right;flex-shrink:0}
+.inv-prod-qty{font-size:13px;font-weight:800}
+.inv-prod-cost{font-size:11px;color:var(--t3);margin-top:1px}
+.destino-sel{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.dest-btn{padding:5px 11px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--t2);transition:all .1s}
+.dest-btn.on{color:#fff;border-color:transparent}
+.dest-btn:active{opacity:.8}
+/* Colores por cocina */
+.c-desayuno{background:#e37400}
+.c-buffet   {background:#1a73e8}
+.c-pasteleria{background:#7c3aed}
+.c-bodega   {background:#1d9e75}
+.inv-summary-row{display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border2);font-size:13px}
+.inv-summary-row:last-child{border-bottom:none}
+.inv-summary-row b{font-weight:700}
 </style>
 </head>
 <body>
@@ -207,6 +237,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="page on" id="pg-home"></div>
     <div class="page"    id="pg-catalogo"></div>
     <div class="page"    id="pg-factura"></div>
+    <div class="page"    id="pg-inventario"></div>
     <div class="page"    id="pg-analisis"></div>
     <div class="page"    id="pg-proyeccion"></div>
   </div>
@@ -214,8 +245,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="bnav on" onclick="go('home',this)">      <i class="ti ti-home"></i>Inicio</button>
     <button class="bnav"    onclick="go('catalogo',this)">  <i class="ti ti-books"></i>Catálogo</button>
     <button class="bnav"    onclick="go('factura',this)">   <i class="ti ti-scan"></i>Factura</button>
+    <button class="bnav"    onclick="go('inventario',this)"><i class="ti ti-package"></i>Inventario</button>
     <button class="bnav"    onclick="go('analisis',this)">  <i class="ti ti-chart-bar"></i>Análisis</button>
-    <button class="bnav"    onclick="go('proyeccion',this)"><i class="ti ti-trending-up"></i>Proyección</button>
   </nav>
 </div>
 
@@ -236,12 +267,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 ══════════════════════════════════════ */
 let CAT  = JSON.parse(localStorage.getItem('cc_cat')  || '[]');
 let FAC  = JSON.parse(localStorage.getItem('cc_fac')  || '[]');
+let INV  = JSON.parse(localStorage.getItem('cc_inv')  || '{}'); // {prodId: {cocina, stock, ultimaFecha, ultimoCosto}}
 let CFG  = JSON.parse(localStorage.getItem('cc_cfg')  || JSON.stringify({
   margen:35, diasMes:26, turnosDia:2, costosF:[]
 }));
 const sv  = ()=>{ localStorage.setItem('cc_cat', JSON.stringify(CAT)); };
 const sf  = ()=>{ localStorage.setItem('cc_fac', JSON.stringify(FAC)); };
+const sinv= ()=>{ localStorage.setItem('cc_inv', JSON.stringify(INV)); };
 const scf = ()=>{ localStorage.setItem('cc_cfg', JSON.stringify(CFG)); };
+
+/* ── Cocinas/destinos ── */
+const COCINAS=[
+  {id:'desayuno',  label:'Desayuno',   icon:'ti-coffee',       cls:'c-desayuno'},
+  {id:'buffet',    label:'Buffet',     icon:'ti-tools-kitchen-2',cls:'c-buffet'},
+  {id:'pasteleria',label:'Pastelería', icon:'ti-croissant',    cls:'c-pasteleria'},
+  {id:'bodega',    label:'Bodega',     icon:'ti-box',          cls:'c-bodega'},
+];
+const cocinaById  = id => COCINAS.find(c=>c.id===id)||COCINAS[3];
+const cocinaColor = id => ({'desayuno':'#e37400','buffet':'#1a73e8','pasteleria':'#7c3aed','bodega':'#1d9e75'})[id]||'#888';
 
 /* ══════════════════════════════════════
    IMPUESTOS SII CHILE
@@ -314,6 +357,7 @@ const TITLES={
   home:['Resumen','Control de costos'],
   catalogo:['Catálogo de productos','Mis productos registrados'],
   factura:['Nueva factura','Escanear o ingresar'],
+  inventario:['Inventario','Por cocina · Categoría · Subcategoría'],
   analisis:['Análisis de costos','Por familia · Tendencia'],
   proyeccion:['Proyección financiera','Punto de equilibrio · Ticket'],
 };
@@ -332,6 +376,7 @@ function go(page,btn){
   if(page==='home')       renderHome();
   else if(page==='catalogo')   renderCatalogo();
   else if(page==='factura')    renderFactura();
+  else if(page==='inventario') renderInventario();
   else if(page==='analisis')   renderAnalisis();
   else if(page==='proyeccion') renderProy();
 }
@@ -414,7 +459,44 @@ function renderHome(){
         </div>`).join('')}
     </div>`:''}
 
-    <div class="slbl">Últimas facturas</div>
+    <div class="slbl">Gasto por cocina este mes</div>
+    <div class="card">
+      ${(()=>{
+        const byCocina={};
+        fMes.forEach(f=>f.items.forEach(it=>{
+          const d=it.destino||'bodega';
+          byCocina[d]=(byCocina[d]||0)+it.totalConImp;
+        }));
+        const rows=COCINAS.map(c=>({c,v:byCocina[c.id]||0})).filter(x=>x.v>0);
+        if(!rows.length) return`<div style="padding:14px;font-size:13px;color:var(--t3);text-align:center">Sin datos — asigna destinos al ingresar facturas</div>`;
+        const maxV=Math.max(...rows.map(x=>x.v));
+        return rows.map(({c,v})=>`
+          <div class="row" onclick="invCocina='${c.id}';go('inventario',document.querySelectorAll('.bnav')[3])" style="cursor:pointer">
+            <div style="width:36px;height:36px;border-radius:10px;background:${cocinaColor(c.id)}22;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i class="ti ${c.icon}" style="color:${cocinaColor(c.id)};font-size:18px"></i>
+            </div>
+            <div class="row-info">
+              <div class="row-t">${c.label}</div>
+              <div style="margin-top:4px;height:5px;background:var(--border2);border-radius:3px;overflow:hidden">
+                <div style="width:${Math.round(v/maxV*100)}%;height:100%;background:${cocinaColor(c.id)};border-radius:3px"></div>
+              </div>
+            </div>
+            <div class="row-r"><div class="row-amt">${fmt(v)}</div></div>
+            <i class="ti ti-chevron-right chev"></i>
+          </div>`).join('');
+      })()}
+    </div>
+
+    <div class="grid2" style="margin-bottom:10px">
+      <button class="met" style="cursor:pointer;text-align:left;border:none;font-family:inherit" onclick="go('analisis',document.querySelectorAll('.bnav')[4])">
+        <div class="met-l">Análisis</div>
+        <div style="font-size:13px;font-weight:700;color:var(--g)">Ver tendencia →</div>
+      </button>
+      <button class="met" style="cursor:pointer;text-align:left;border:none;font-family:inherit" onclick="go('proyeccion',null)">
+        <div class="met-l">Proyección</div>
+        <div style="font-size:13px;font-weight:700;color:var(--b)">Ticket mínimo →</div>
+      </button>
+    </div>
     <div class="card">
       ${FAC.length?FAC.slice().reverse().slice(0,6).map((f,ri)=>{
         const i=FAC.length-1-ri;
@@ -446,14 +528,27 @@ function renderCatalogo(){
       ||(p.area||'').toLowerCase().includes(q)||(p.aliases||[]).some(a=>a.toLowerCase().includes(q));
   });
 
+  // Barra de acciones importar/exportar (siempre visible)
+  const actionBar=`
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button onclick="descargarPlantilla()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 10px;border-radius:10px;border:1.5px solid var(--g);background:var(--gl);color:var(--gd);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        <i class="ti ti-table-down" style="font-size:18px"></i>Descargar plantilla
+      </button>
+      <button onclick="document.getElementById('csv-inp').click()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 10px;border-radius:10px;border:1.5px solid var(--b);background:var(--bl);color:var(--b);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        <i class="ti ti-table-import" style="font-size:18px"></i>Importar CSV
+      </button>
+    </div>
+    <input type="file" id="csv-inp" accept=".csv,.txt" style="display:none" onchange="importarCSV(this)">`;
+
   if(!CAT.length){
     document.getElementById('pg-catalogo').innerHTML=`
+      ${actionBar}
       <div class="ibox blue"><i class="ti ti-bulb" style="font-size:16px;flex-shrink:0"></i>
-      <span>Agrega cada producto que compras con el <b>nombre exacto como aparece en la factura</b> como alias. El OCR lo reconocerá automáticamente.</span></div>
+      <span>Descarga la <b>plantilla CSV</b>, complétala con tus productos y vuelve a importarla. También puedes agregar uno a uno con <b>+ Nuevo</b>.</span></div>
       <div class="empty">
         <i class="ti ti-books"></i>
         <div class="empty-t">Catálogo vacío</div>
-        <div class="empty-s">Registra tus productos una sola vez con nombre, área, categoría, impuesto y los nombres que aparecen en las facturas.</div>
+        <div class="empty-s">Carga tus productos en masa con la plantilla o agrégalos de uno en uno.</div>
         <button class="btn-p" style="max-width:240px;margin:0 auto" onclick="modalProd(null)">
           <i class="ti ti-plus"></i>Crear primer producto
         </button>
@@ -465,6 +560,7 @@ function renderCatalogo(){
   filtered.forEach(p=>{const a=p.area||'Sin área';(byArea[a]=byArea[a]||[]).push(p);});
 
   document.getElementById('pg-catalogo').innerHTML=`
+    ${actionBar}
     <div class="srap">
       <i class="ti ti-search"></i>
       <input class="sinp" placeholder="Buscar producto, alias, categoría..." value="${catQ}"
@@ -483,12 +579,260 @@ function renderCatalogo(){
             </div>
             <div class="cinfo">
               <div class="cname">${p.nombre}</div>
-              <div class="cpath">${p.categoria||''}${p.sub?' · '+p.sub:''} · ${IMP[p.imp]?.n||'IVA'}</div>
+              <div class="cpath">${p.categoria||''}${p.sub?' · '+p.sub:''} · ${IMP[p.imp]?.n||'IVA'} · <span style="color:${cocinaColor(p.destino||'bodega')};font-weight:700">${cocinaById(p.destino||'bodega').label}</span></div>
               ${p.aliases?.length?`<div class="calias">📄 ${p.aliases.join(' · ')}</div>`:'<div class="calias" style="color:var(--a)">⚠ Sin aliases — el OCR no lo reconocerá</div>'}
             </div>
             <i class="ti ti-chevron-right chev"></i>
           </div>`).join('')}
       </div>`).join('')}`;
+}
+
+/* ══════════════════════════════════════
+   PLANTILLA CSV — DESCARGA
+   Campos: nombre | area | categoria | subcategoria | destino | impuesto | alias_1 … alias_5
+══════════════════════════════════════ */
+function descargarPlantilla(){
+  const AREAS   =['Cocina caliente','Pastelería','Barra','Bodega general','Desayuno','Limpieza','Desechables'];
+  const DESTINOS=['desayuno','buffet','pasteleria','bodega'];
+  const IMPUESTOS_IDS=Object.keys(IMP);
+
+  // ── Encabezados ──
+  const headers=[
+    'nombre',
+    'area',
+    'categoria',
+    'subcategoria',
+    'destino_cocina',
+    'impuesto',
+    'alias_1','alias_2','alias_3','alias_4','alias_5'
+  ];
+
+  // ── Hoja de referencia (como comentarios al final) ──
+  const refArea   = AREAS.map(a=>`"${a}"`).join(' | ');
+  const refDest   = DESTINOS.join(' | ');
+  const refImp    = IMPUESTOS_IDS.map(k=>`${k} (${IMP[k].n})`).join(' | ');
+
+  // ── Filas de ejemplo ──
+  const ejemplos=[
+    ['Pechuga de pollo','Cocina caliente','Proteínas','Pollo','buffet','iva','PECHUGA POLLO','PECHUGA POLLO CJ 10KG','Pollo pechuga','',''],
+    ['Arroz Tucapel','Bodega general','Abarrotes','Granos','bodega','iva','ARROZ TUCAPEL BLUE BONNET G2 10X1KG','ARROZ TUCAPEL','Arroz','',''],
+    ['Pepsi lata 350','Barra','Bebidas','Bebidas azucaradas','buffet','iva_azucar','PEPSI 6PFX4-LAT350','PEPSI ZERO 6PFX4-LATA 350CC','Pepsi','',''],
+    ['Mantequilla Kumey','Pastelería','Lácteos','Mantequilla','pasteleria','iva','MANTEQUILLA KUMEY 20 x 250 GR (CJ)','Mantequilla','','',''],
+    ['Key Higienizante','Bodega general','Limpieza','Desinfectantes','bodega','iva','KEY HIGIENIZANTE 1X5L','Higienizante','','',''],
+    ['Filete de Reineta','Cocina caliente','Proteínas','Pescados','buffet','iva','FILETE DE REINETA CJ 8 KG','Reineta','','',''],
+    ['Berlin Insumo','Pastelería','Pastelería','Berlines','pasteleria','iva','BERLIN INSUMO CJ X 36 UN','Berlin','','',''],
+    ['Baguette Mini','Pastelería','Panadería','Panes','desayuno','iva','BAGUETTE MINI CJ X 8 KG','Baguette','','',''],
+    ['Guantes Nitrilo M','Bodega general','Limpieza','Utensilios','bodega','iva','GUANTES NITRILO NEGRO - TALLA M 100 und','Guantes','','',''],
+    ['Leche Lonco Entera','Pastelería','Lácteos','Leche','pasteleria','iva','LECHE LONCO ENTERA 12X1LT','Leche','','',''],
+  ];
+
+  // ── Exportar los productos existentes si los hay ──
+  const existentes=CAT.map(p=>[
+    p.nombre,
+    p.area||'',
+    p.categoria||'',
+    p.sub||'',
+    p.destino||'bodega',
+    p.imp||'iva',
+    ...(p.aliases||[]).slice(0,5),
+    ...Array(Math.max(0,5-(p.aliases||[]).length)).fill('')
+  ]);
+
+  // ── Construir CSV ──
+  const esc = v => {
+    const s=String(v||'');
+    return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g,'""')}"` : s;
+  };
+  const row = cols => cols.map(esc).join(',');
+
+  const lines=[
+    '# PLANTILLA DE CARGA MASIVA — CostControl',
+    '# Instrucciones:',
+    '#   1. No borres ni modifiques la fila de encabezados',
+    '#   2. Completa una fila por producto',
+    '#   3. Los campos nombre / area / destino_cocina / impuesto son OBLIGATORIOS',
+    '#   4. Puedes agregar hasta 5 aliases (nombres tal como aparecen en la factura)',
+    '#   5. Guarda como CSV (separado por comas) y luego usa "Importar CSV" en la app',
+    '#',
+    `# VALORES VÁLIDOS para area:       ${refArea}`,
+    `# VALORES VÁLIDOS para destino_cocina: ${refDest}`,
+    `# VALORES VÁLIDOS para impuesto:   ${refImp}`,
+    '#',
+    row(headers),
+    ...(existentes.length ? existentes.map(row) : ejemplos.map(row))
+  ];
+
+  const csv=lines.join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='catalogo_productos.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ══════════════════════════════════════
+   IMPORTAR CSV
+══════════════════════════════════════ */
+function importarCSV(input){
+  const file=input.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const text=e.target.result.replace(/^\uFEFF/,''); // quitar BOM
+    procesarCSV(text);
+  };
+  reader.readAsText(file,'UTF-8');
+  input.value='';
+}
+
+function procesarCSV(text){
+  // Parsear CSV respetando campos entre comillas
+  function parseRow(line){
+    const result=[]; let cur='', inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){ if(inQ&&line[i+1]==='"'){cur+='"';i++;} else inQ=!inQ; }
+      else if(c===','&&!inQ){ result.push(cur.trim()); cur=''; }
+      else cur+=c;
+    }
+    result.push(cur.trim());
+    return result;
+  }
+
+  const rawLines=text.split(/\r?\n/);
+  // Filtrar comentarios y vacías
+  const lines=rawLines.filter(l=>l.trim()&&!l.trim().startsWith('#'));
+  if(!lines.length){ alert('El archivo está vacío o solo tiene comentarios.'); return; }
+
+  // Detectar encabezados
+  const headerLine=lines[0];
+  const headers=parseRow(headerLine).map(h=>h.toLowerCase().trim());
+  const idx={
+    nombre:       headers.indexOf('nombre'),
+    area:         headers.indexOf('area'),
+    categoria:    headers.indexOf('categoria'),
+    sub:          headers.findIndex(h=>h.startsWith('subcategor')),
+    destino:      headers.findIndex(h=>h.includes('destino')),
+    imp:          headers.findIndex(h=>h.includes('impuesto')||h.includes('imp')),
+    alias_start:  headers.findIndex(h=>h.startsWith('alias')),
+  };
+
+  if(idx.nombre<0){ alert('No se encontró la columna "nombre". Verifica que usas la plantilla correcta.'); return; }
+
+  const VALID_AREAS   =['Cocina caliente','Pastelería','Barra','Bodega general','Desayuno','Limpieza','Desechables'];
+  const VALID_DESTINOS=['desayuno','buffet','pasteleria','bodega'];
+  const VALID_IMP     =Object.keys(IMP);
+
+  const nuevos=[], errores=[], omitidos=[];
+  const dataLines=lines.slice(1);
+
+  dataLines.forEach((line,li)=>{
+    if(!line.trim()) return;
+    const cols=parseRow(line);
+    const nombre=(cols[idx.nombre]||'').trim();
+    if(!nombre){ errores.push(`Fila ${li+2}: sin nombre`); return; }
+
+    // Área: tomar la primera que haga match parcial (case-insensitive)
+    let area=idx.area>=0?(cols[idx.area]||'').trim():'Bodega general';
+    const areaMatch=VALID_AREAS.find(a=>a.toLowerCase()===area.toLowerCase()||a.toLowerCase().includes(area.toLowerCase())||area.toLowerCase().includes(a.toLowerCase().split(' ')[0]));
+    if(areaMatch) area=areaMatch;
+    else if(area) errores.push(`Fila ${li+2} (${nombre}): área "${area}" desconocida, se usó "Bodega general"`);
+
+    let destino=idx.destino>=0?(cols[idx.destino]||'').trim().toLowerCase():'bodega';
+    if(!VALID_DESTINOS.includes(destino)){
+      errores.push(`Fila ${li+2} (${nombre}): destino "${destino}" inválido, se usó "bodega"`);
+      destino='bodega';
+    }
+
+    let imp=idx.imp>=0?(cols[idx.imp]||'').trim().toLowerCase():'iva';
+    if(!VALID_IMP.includes(imp)){
+      errores.push(`Fila ${li+2} (${nombre}): impuesto "${imp}" inválido, se usó "iva"`);
+      imp='iva';
+    }
+
+    const categoria=idx.categoria>=0?(cols[idx.categoria]||'').trim():'';
+    const sub       =idx.sub>=0?(cols[idx.sub]||'').trim():'';
+
+    // Aliases: columnas alias_1..alias_5 (hasta 5 desde alias_start)
+    const aliases=[];
+    if(idx.alias_start>=0){
+      for(let ai=idx.alias_start;ai<Math.min(idx.alias_start+5,cols.length);ai++){
+        const al=(cols[ai]||'').trim();
+        if(al) aliases.push(al);
+      }
+    }
+
+    // Verificar si ya existe por nombre exacto
+    const existe=CAT.find(p=>p.nombre.toLowerCase()===nombre.toLowerCase());
+    if(existe){
+      // Actualizar aliases si hay nuevos, no duplicar producto
+      const nuevosAl=aliases.filter(a=>!existe.aliases.includes(a));
+      if(nuevosAl.length){ existe.aliases.push(...nuevosAl); omitidos.push(`${nombre} (actualizado ${nuevosAl.length} alias)`); }
+      else omitidos.push(`${nombre} (ya existe, sin cambios)`);
+      return;
+    }
+
+    nuevos.push({
+      id:'p'+Date.now()+Math.random().toString(36).slice(2,6),
+      nombre, area, categoria, sub, destino, imp, aliases
+    });
+  });
+
+  if(!nuevos.length && !omitidos.length && errores.length){
+    alert('No se pudo importar ningún producto.\n\nErrores:\n'+errores.slice(0,10).join('\n'));
+    return;
+  }
+
+  // Mostrar preview antes de confirmar
+  openModal(`
+    <div class="mtitle">Resultado de importación</div>
+
+    ${nuevos.length?`
+    <div class="ibox green" style="margin-bottom:10px">
+      <i class="ti ti-check" style="font-size:16px;flex-shrink:0"></i>
+      <span><b>${nuevos.length} producto${nuevos.length!==1?'s':''} nuevos</b> listos para importar</span>
+    </div>
+    <div class="card" style="margin-bottom:12px;max-height:260px;overflow-y:auto">
+      ${nuevos.map(p=>`
+        <div style="padding:9px 14px;border-bottom:1px solid var(--border2)">
+          <div style="font-size:13px;font-weight:700">${p.nombre}</div>
+          <div style="font-size:11px;color:var(--t3)">${p.area} · ${p.categoria||'—'} · <span style="color:${cocinaColor(p.destino)};font-weight:600">${cocinaById(p.destino).label}</span> · ${IMP[p.imp]?.n}</div>
+          ${p.aliases.length?`<div style="font-size:11px;color:var(--b);margin-top:2px">📄 ${p.aliases.join(' · ')}</div>`:'<div style="font-size:11px;color:var(--a)">⚠ Sin aliases</div>'}
+        </div>`).join('')}
+    </div>`:''}
+
+    ${omitidos.length?`
+    <div class="ibox blue" style="margin-bottom:10px">
+      <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0"></i>
+      <span><b>${omitidos.length}</b> fila${omitidos.length!==1?'s':''} omitida${omitidos.length!==1?'s':''} (ya existían)</span>
+    </div>`:''}
+
+    ${errores.length?`
+    <div class="ibox orange" style="margin-bottom:10px">
+      <i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0"></i>
+      <div><b>${errores.length} advertencia${errores.length!==1?'s':''}:</b><br>
+      <span style="font-size:11px">${errores.slice(0,8).join('<br>')}</span></div>
+    </div>`:''}
+
+    ${nuevos.length?`
+    <button class="btn-p" onclick="confirmarImport(${JSON.stringify(nuevos).replace(/</g,'\\u003c')})">
+      <i class="ti ti-check"></i>Importar ${nuevos.length} producto${nuevos.length!==1?'s':''}
+    </button>`:''}
+    <button onclick="closeM()" style="width:100%;padding:12px;border:1px solid var(--border);background:var(--bg);color:var(--t2);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
+      ${nuevos.length?'Cancelar':'Cerrar'}
+    </button>`);
+}
+
+function confirmarImport(productos){
+  CAT.push(...productos);
+  sv(); closeM(); catQ='';
+  renderCatalogo();
+  // Toast de confirmación
+  const toast=document.createElement('div');
+  toast.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.3);white-space:nowrap;max-width:90vw;text-align:center';
+  toast.textContent=`✓ ${productos.length} producto${productos.length!==1?'s':''} importado${productos.length!==1?'s':''}`;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),3000);
+}
 }
 
 let _tmpAl=[], _editId=null;
@@ -507,6 +851,8 @@ function modalProd(id){
     </div>
     <div class="ff"><label>Subcategoría</label>
       <input id="p-s" placeholder="Ej: Pollo" value="${p?p.sub||'':''}"></div>
+    <div class="ff"><label>Destino por defecto</label>
+      <select id="p-dest">${COCINAS.map(c=>`<option value="${c.id}"${p?.destino===c.id?' selected':''}>${c.label}</option>`).join('')}</select></div>
     <div class="ff"><label>Impuesto SII</label>
       <select id="p-i">${Object.entries(IMP).map(([k,v])=>`<option value="${k}"${p?.imp===k?' selected':''}>${v.n} (${fmtP(v.iva+v.ad)})</option>`).join('')}</select></div>
     <div class="ff">
@@ -541,6 +887,7 @@ function saveProd(){
     area:document.getElementById('p-a')?.value,
     categoria:document.getElementById('p-c')?.value.trim(),
     sub:document.getElementById('p-s')?.value.trim(),
+    destino:document.getElementById('p-dest')?.value||'bodega',
     imp:document.getElementById('p-i')?.value||'iva',
     aliases:[..._tmpAl],
   };
@@ -722,15 +1069,23 @@ function renderFacReview(){
 function renderReviewLine(r,i){
   const p=r.elegido.prod, c=calcImp(r.nu,r.qty,p.imp);
   const t=IMP[p.imp];
+  const dest=r.destino||p.destino||'bodega';
   return`
   <div class="pline" id="rl-${i}">
     <div class="pline-top">
-      <div>
+      <div style="flex:1">
         <div class="pline-name">${p.nombre}</div>
         <div class="pline-path">${p.area} · ${p.categoria||''}</div>
         <div class="match-ocr">OCR: "${r.textoOCR}"</div>
         <span class="badge bg" style="margin-top:4px">Match ${r.elegido.score}%</span>
         <span class="tpill ${t.ad>0?'tp-ex':'tp-ok'}">${t.n} (${fmtP(t.iva+t.ad)})</span>
+        <div class="destino-sel">
+          ${COCINAS.map(c=>`<button class="dest-btn${dest===c.id?' on':''}"
+            style="${dest===c.id?'background:'+cocinaColor(c.id):''}"
+            onclick="ocrResults[${i}].destino='${c.id}';renderFactura()">
+            <i class="ti ${c.icon}" style="vertical-align:-2px;font-size:11px"></i> ${c.label}
+          </button>`).join('')}
+        </div>
       </div>
       <button class="del-btn" onclick="removeOCRLine(${i})"><i class="ti ti-x"></i></button>
     </div>
@@ -792,7 +1147,8 @@ function confirmarOCR(){
   if(!activos.length){alert('Agrega al menos un producto con precio');return;}
   fItems=activos.map(r=>{
     const p=r.elegido.prod, c=calcImp(r.nu,r.qty,p.imp);
-    return{prodId:p.id,nombre:p.nombre,area:p.area,categoria:p.categoria,sub:p.sub,imp:p.imp,qty:r.qty,nu:r.nu,c};
+    return{prodId:p.id,nombre:p.nombre,area:p.area,categoria:p.categoria,sub:p.sub,imp:p.imp,
+           destino:r.destino||p.destino||'bodega',qty:r.qty,nu:r.nu,c};
   });
   guardarFac('ocr');
 }
@@ -859,7 +1215,8 @@ function renderFacDrop(q){
 function addFItem(id){
   const p=CAT.find(x=>x.id===id); if(!p)return;
   const nu=0, qty=1, c=calcImp(nu,qty,p.imp);
-  fItems.push({prodId:id,nombre:p.nombre,area:p.area,categoria:p.categoria,sub:p.sub,imp:p.imp,qty,nu,c});
+  fItems.push({prodId:id,nombre:p.nombre,area:p.area,categoria:p.categoria,sub:p.sub,
+               imp:p.imp,destino:p.destino||'bodega',qty,nu,c});
   document.getElementById('f-q').value='';
   document.getElementById('f-drop').innerHTML='';
   renderFactura();
@@ -868,13 +1225,21 @@ function addFItem(id){
 
 function renderEditLine(it,i){
   const t=IMP[it.imp]||IMP['iva'];
+  const dest=it.destino||'bodega';
   return`
   <div class="pline">
     <div class="pline-top">
-      <div>
+      <div style="flex:1">
         <div class="pline-name">${it.nombre}</div>
         <div class="pline-path">${it.area} · ${it.categoria||''}</div>
         <span class="tpill ${t.ad>0?'tp-ex':'tp-ok'}">${t.n} (${fmtP(t.iva+t.ad)})</span>
+        <div class="destino-sel">
+          ${COCINAS.map(c=>`<button class="dest-btn${dest===c.id?' on':''}" 
+            style="${dest===c.id?'background:'+cocinaColor(c.id):''}"
+            onclick="fItems[${i}].destino='${c.id}';renderFactura()">
+            <i class="ti ${c.icon}" style="vertical-align:-2px;font-size:11px"></i> ${c.label}
+          </button>`).join('')}
+        </div>
       </div>
       <button class="del-btn" onclick="fItems.splice(${i},1);renderFactura()"><i class="ti ti-x"></i></button>
     </div>
@@ -908,13 +1273,25 @@ function guardarFac(src){
     totalNeto:neto, totalConImp:total,
     items:fItems.map(it=>({
       prodId:it.prodId, nombre:it.nombre, area:it.area,
-      categoria:it.categoria||'', imp:it.imp,
+      categoria:it.categoria||'', sub:it.sub||'', imp:it.imp,
+      destino:it.destino||'bodega',
       qty:it.qty, nu:it.nu,
       totalNeto:it.c.neto, totalConImp:it.c.total,
       iva:it.c.iva, ad:it.c.ad
     }))
   });
-  sf(); fStep='ok'; renderFactura();
+  // Actualizar inventario acumulado
+  fItems.forEach(it=>{
+    const pid=it.prodId;
+    if(!INV[pid]) INV[pid]={destino:it.destino||'bodega', stock:0, costoAcum:0, ultimaFecha:'', ultimoCosto:0, ultimoQty:0};
+    INV[pid].destino    = it.destino||'bodega';
+    INV[pid].stock     += it.qty;
+    INV[pid].costoAcum += it.c.total;
+    INV[pid].ultimaFecha= fFecha;
+    INV[pid].ultimoCosto= it.nu;
+    INV[pid].ultimoQty  = it.qty;
+  });
+  sf(); sinv(); fStep='ok'; renderFactura();
 }
 
 /* ── Paso 5: ok ── */
@@ -961,6 +1338,278 @@ function verFac(i){
       style="width:100%;padding:12px;border:1px solid var(--r);background:var(--rl);color:var(--r);border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
       <i class="ti ti-trash" style="vertical-align:-2px"></i> Eliminar factura
     </button>`);
+}
+
+/* ══════════════════════════════════════
+   INVENTARIO
+   Vista por cocina → categoría → subcategoría → productos
+══════════════════════════════════════ */
+let invCocina='desayuno';
+
+function renderInventario(){
+  const el=document.getElementById('pg-inventario');
+  const tbact=document.getElementById('tb-act');
+  tbact.style.display='block'; tbact.textContent='Reasignar'; tbact.style.color='var(--b)';
+  tbact.onclick=()=>modalReasignar();
+
+  // Tabs de cocina
+  const tabs=`<div class="cocina-tabs">
+    ${COCINAS.map(c=>`
+      <button class="ctab${invCocina===c.id?' on':''}"
+        style="${invCocina===c.id?'background:'+cocinaColor(c.id)+';color:#fff':''}"
+        onclick="invCocina='${c.id}';renderInventario()">
+        <i class="ti ${c.icon}" style="vertical-align:-2px;font-size:13px"></i> ${c.label}
+      </button>`).join('')}
+  </div>`;
+
+  // Recopilar productos de esta cocina desde INV + todas las facturas
+  // Para cada producto: historial de compras con su destino real
+  const prodData={}; // {prodId: {prod, entries:[{fecha,prov,qty,nu,total,destino}]}}
+
+  FAC.forEach(f=>{
+    f.items.forEach(it=>{
+      const d=it.destino||INV[it.prodId]?.destino||'bodega';
+      if(d!==invCocina) return;
+      if(!prodData[it.prodId]) {
+        const catProd=CAT.find(p=>p.id===it.prodId);
+        prodData[it.prodId]={
+          prod:catProd||{id:it.prodId,nombre:it.nombre,area:it.area,categoria:it.categoria||'General',sub:it.sub||'',imp:it.imp},
+          entries:[], totalQty:0, totalCosto:0
+        };
+      }
+      prodData[it.prodId].entries.push({fecha:f.fecha,prov:f.prov,qty:it.qty,nu:it.nu,total:it.totalConImp,destino:d});
+      prodData[it.prodId].totalQty  += it.qty;
+      prodData[it.prodId].totalCosto+= it.totalConImp;
+    });
+  });
+
+  if(!Object.keys(prodData).length){
+    const c=cocinaById(invCocina);
+    el.innerHTML=tabs+`
+      <div class="empty">
+        <i class="ti ${c.icon}" style="color:${cocinaColor(invCocina)};font-size:44px"></i>
+        <div class="empty-t">Sin productos en ${c.label}</div>
+        <div class="empty-s">Cuando ingreses facturas asigna productos a esta cocina para verlos aquí.</div>
+      </div>`;
+    return;
+  }
+
+  // Agrupar por área → categoría → subcategoría
+  const byArea={};
+  Object.values(prodData).forEach(({prod,entries,totalQty,totalCosto})=>{
+    const a=prod.area||'Sin área';
+    const cat=prod.categoria||'General';
+    const sub=prod.sub||'';
+    if(!byArea[a]) byArea[a]={};
+    if(!byArea[a][cat]) byArea[a][cat]={};
+    if(!byArea[a][cat][sub]) byArea[a][cat][sub]=[];
+    byArea[a][cat][sub].push({prod,entries,totalQty,totalCosto});
+  });
+
+  // Totales de la cocina
+  const totalCocina=Object.values(prodData).reduce((s,d)=>s+d.totalCosto,0);
+  const totalProds  =Object.keys(prodData).length;
+  const cInfo=cocinaById(invCocina);
+
+  let html=tabs;
+
+  // Header resumen cocina
+  html+=`
+    <div class="card" style="margin-bottom:10px">
+      <div class="inv-cocina-header">
+        <div class="inv-cocina-icon" style="background:${cocinaColor(invCocina)}22">
+          <i class="ti ${cInfo.icon}" style="color:${cocinaColor(invCocina)}"></i>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:800">${cInfo.label}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">${totalProds} producto${totalProds!==1?'s':''} · Costo total acumulado</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:800">${fmt(totalCocina)}</div>
+        </div>
+      </div>
+    </div>`;
+
+  // Árbol área → categoría → subcategoría → productos
+  Object.entries(byArea).sort().forEach(([area,cats])=>{
+    const areaCosto=Object.values(cats).reduce((s,subs)=>s+Object.values(subs).reduce((ss,prods)=>ss+prods.reduce((sss,p)=>sss+p.totalCosto,0),0),0);
+    html+=`<div class="slbl" style="display:flex;align-items:center;gap:6px;margin-top:16px">
+      <i class="ti ${aIcon(area)}" style="color:${aColor(area)};font-size:13px"></i>${area}
+      <span style="margin-left:auto;font-weight:800;color:var(--t1)">${fmt(areaCosto)}</span>
+    </div>`;
+
+    Object.entries(cats).sort().forEach(([cat,subs])=>{
+      const catCosto=Object.values(subs).reduce((s,prods)=>s+prods.reduce((ss,p)=>ss+p.totalCosto,0),0);
+      html+=`<div class="card" style="margin-bottom:8px">
+        <div style="background:var(--bg);padding:9px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border2)">
+          <span style="font-size:12px;font-weight:700;color:var(--t2)">${cat}</span>
+          <span style="font-size:12px;font-weight:700">${fmt(catCosto)}</span>
+        </div>`;
+
+      Object.entries(subs).sort().forEach(([sub,prods])=>{
+        if(sub){
+          html+=`<div class="inv-categoria-lbl">${sub}</div>`;
+        }
+        prods.sort((a,b)=>b.totalCosto-a.totalCosto).forEach(({prod,entries,totalQty,totalCosto})=>{
+          const lastEntry=entries.slice().sort((a,b)=>b.fecha>a.fecha?1:-1)[0];
+          const veces=entries.length;
+          const avgCosto=totalCosto/veces;
+          html+=`
+            <div class="inv-prod-row" onclick="modalDetalleProd('${prod.id}','${invCocina}')" style="cursor:pointer">
+              <div style="width:8px;height:8px;border-radius:50%;background:${cocinaColor(invCocina)};flex-shrink:0"></div>
+              <div class="inv-prod-info">
+                <div class="inv-prod-name">${prod.nombre}</div>
+                <div class="inv-prod-sub">Última compra: ${lastEntry?.fecha||'—'} · ${lastEntry?.prov||'—'}</div>
+                <div style="font-size:11px;color:var(--t3);margin-top:1px">${veces} compra${veces!==1?'s':''} · ${totalQty.toLocaleString('es-CL',{maximumFractionDigits:2})} unidades</div>
+              </div>
+              <div class="inv-prod-right">
+                <div class="inv-prod-qty">${fmt(totalCosto)}</div>
+                <div class="inv-prod-cost">${fmt(lastEntry?.nu||0)}/u</div>
+              </div>
+              <i class="ti ti-chevron-right chev"></i>
+            </div>`;
+        });
+      });
+      html+=`</div>`;
+    });
+  });
+
+  // Resumen por área al pie
+  html+=`<div class="slbl">Resumen por área · ${cInfo.label}</div>
+    <div class="card">
+      ${Object.entries(byArea).map(([area,cats])=>{
+        const v=Object.values(cats).reduce((s,subs)=>s+Object.values(subs).reduce((ss,prods)=>ss+prods.reduce((sss,p)=>sss+p.totalCosto,0),0),0);
+        return`<div class="inv-summary-row">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${aColor(area)}"></div>
+            <span>${area}</span>
+          </div>
+          <b>${fmt(v)}</b>
+        </div>`;
+      }).join('')}
+      <div class="inv-summary-row" style="background:var(--bg)">
+        <span style="font-weight:700">Total ${cInfo.label}</span>
+        <b style="font-size:16px">${fmt(totalCocina)}</b>
+      </div>
+    </div>`;
+
+  el.innerHTML=html;
+}
+
+/* ── Detalle de producto en inventario ── */
+function modalDetalleProd(prodId, cocina){
+  // Recopilar todas las entradas de este producto en esta cocina
+  const prod=CAT.find(p=>p.id===prodId);
+  const entries=[];
+  FAC.forEach(f=>{
+    f.items.forEach(it=>{
+      if(it.prodId===prodId && (it.destino||'bodega')===cocina)
+        entries.push({fecha:f.fecha,prov:f.prov,qty:it.qty,nu:it.nu,total:it.totalConImp});
+    });
+  });
+  entries.sort((a,b)=>b.fecha>a.fecha?1:-1);
+  const totalQty  =entries.reduce((s,e)=>s+e.qty,0);
+  const totalCosto=entries.reduce((s,e)=>s+e.total,0);
+  const avgNu     =entries.length?Math.round(entries.reduce((s,e)=>s+e.nu,0)/entries.length):0;
+  const cInfo     =cocinaById(cocina);
+
+  openModal(`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:44px;height:44px;border-radius:12px;background:${cocinaColor(cocina)}22;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">
+        <i class="ti ${cInfo.icon}" style="color:${cocinaColor(cocina)}"></i>
+      </div>
+      <div>
+        <div class="mtitle" style="margin:0">${prod?.nombre||'Producto'}</div>
+        <div style="font-size:12px;color:var(--t3)">${prod?.area||''} · ${prod?.categoria||''} · <span style="color:${cocinaColor(cocina)};font-weight:700">${cInfo.label}</span></div>
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-bottom:14px">
+      <div class="met">
+        <div class="met-l" style="font-size:10px">Compras</div>
+        <div class="met-v" style="font-size:18px">${entries.length}</div>
+      </div>
+      <div class="met">
+        <div class="met-l" style="font-size:10px">Total unid.</div>
+        <div class="met-v" style="font-size:18px">${totalQty.toLocaleString('es-CL',{maximumFractionDigits:1})}</div>
+      </div>
+      <div class="met">
+        <div class="met-l" style="font-size:10px">Precio prom.</div>
+        <div class="met-v" style="font-size:18px">${fmt(avgNu)}</div>
+      </div>
+    </div>
+    <div class="met" style="margin-bottom:14px;text-align:center">
+      <div class="met-l">Costo acumulado total</div>
+      <div class="met-v" style="font-size:26px">${fmt(totalCosto)}</div>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Historial de compras</div>
+    <div class="card" style="margin-bottom:14px">
+      ${entries.length?entries.map(e=>`
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;font-weight:600">${e.fecha}</div>
+            <div style="font-size:11px;color:var(--t3)">${e.prov} · ${e.qty} × ${fmt(e.nu)}</div>
+          </div>
+          <div style="font-size:13px;font-weight:800">${fmt(e.total)}</div>
+        </div>`).join('')
+      :'<div style="padding:14px;font-size:13px;color:var(--t3);text-align:center">Sin registros</div>'}
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Reasignar destino</div>
+    <div class="destino-sel" style="flex-wrap:wrap;gap:8px">
+      ${COCINAS.map(c=>`<button class="dest-btn${cocina===c.id?' on':''}"
+        style="flex:1;justify-content:center;padding:10px 8px;${cocina===c.id?'background:'+cocinaColor(c.id):''}"
+        onclick="reasignarProd('${prodId}','${c.id}')">
+        <i class="ti ${c.icon}" style="vertical-align:-2px;font-size:12px"></i> ${c.label}
+      </button>`).join('')}
+    </div>`);
+}
+
+/* ── Reasignar producto a otra cocina ── */
+function reasignarProd(prodId, nuevaCocina){
+  // Actualizar INV
+  if(!INV[prodId]) INV[prodId]={};
+  INV[prodId].destino=nuevaCocina;
+  // Actualizar en CAT
+  const cp=CAT.find(p=>p.id===prodId);
+  if(cp) cp.destino=nuevaCocina;
+  // Actualizar destino en todas las facturas para ese producto
+  FAC.forEach(f=>f.items.forEach(it=>{ if(it.prodId===prodId) it.destino=nuevaCocina; }));
+  sv(); sinv(); sf();
+  closeM();
+  invCocina=nuevaCocina;
+  renderInventario();
+}
+
+/* ── Modal reasignación global ── */
+function modalReasignar(){
+  // Listar todos los productos que tienen entradas en inventario
+  const prods=CAT.filter(p=>{
+    return FAC.some(f=>f.items.some(it=>it.prodId===p.id));
+  });
+  if(!prods.length){closeM();alert('Sin productos registrados en facturas aún.');return;}
+
+  openModal(`
+    <div class="mtitle">Reasignar destinos</div>
+    <div class="ibox blue"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0"></i>
+    <span>Cambia el destino de cualquier producto. Afecta todo el historial.</span></div>
+    <div class="card">
+      ${prods.map(p=>{
+        const dest=INV[p.id]?.destino||p.destino||'bodega';
+        const c=cocinaById(dest);
+        return`<div style="padding:11px 14px;border-bottom:1px solid var(--border2)">
+          <div style="font-size:13px;font-weight:700;margin-bottom:6px">${p.nombre}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            ${COCINAS.map(ck=>`<button class="dest-btn${dest===ck.id?' on':''}"
+              style="${dest===ck.id?'background:'+cocinaColor(ck.id):''}"
+              onclick="reasignarProd('${p.id}','${ck.id}');closeM();modalReasignar()">
+              <i class="ti ${ck.icon}" style="font-size:11px;vertical-align:-1px"></i> ${ck.label}
+            </button>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`);
 }
 
 /* ══════════════════════════════════════

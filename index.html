@@ -365,12 +365,14 @@ function go(page,btn){
   prevPage=null;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.bnav').forEach(b=>b.classList.remove('on'));
-  document.getElementById('pg-'+page).classList.add('on');
+  const pgEl=document.getElementById('pg-'+page);
+  if(!pgEl) return; // página no existe, no crash
+  pgEl.classList.add('on');
   if(btn) btn.classList.add('on');
   document.getElementById('scroll').scrollTop=0;
-  const[t,s]=TITLES[page];
-  document.getElementById('tb-title').textContent=t;
-  document.getElementById('tb-sub').textContent=s;
+  const titleEntry=TITLES[page]||['',''];
+  document.getElementById('tb-title').textContent=titleEntry[0];
+  document.getElementById('tb-sub').textContent=titleEntry[1];
   document.getElementById('back-btn').style.display='none';
   document.getElementById('tb-act').style.display='none';
   if(page==='home')       renderHome();
@@ -382,8 +384,10 @@ function go(page,btn){
 }
 function goBack(){
   if(!prevPage) return;
-  const idx=['home','catalogo','factura','analisis','proyeccion'].indexOf(prevPage);
-  go(prevPage, document.querySelectorAll('.bnav')[idx]);
+  const PAGES=['home','catalogo','factura','inventario','analisis','proyeccion'];
+  const idx=PAGES.indexOf(prevPage);
+  const btn=idx>=0?document.querySelectorAll('.bnav')[idx]:null;
+  go(prevPage, btn||null);
   prevPage=null;
 }
 function openModal(html){ document.getElementById('modal-body').innerHTML=html; document.getElementById('ov').style.display='flex'; }
@@ -782,6 +786,9 @@ function procesarCSV(text){
     return;
   }
 
+  // Guardar en variable global para evitar JSON inline en onclick (rompe el HTML)
+  _pendingImport = nuevos;
+
   // Mostrar preview antes de confirmar
   openModal(`
     <div class="mtitle">Resultado de importación</div>
@@ -814,16 +821,21 @@ function procesarCSV(text){
     </div>`:''}
 
     ${nuevos.length?`
-    <button class="btn-p" onclick="confirmarImport(${JSON.stringify(nuevos).replace(/</g,'\\u003c')})">
+    <button class="btn-p" onclick="confirmarImport()">
       <i class="ti ti-check"></i>Importar ${nuevos.length} producto${nuevos.length!==1?'s':''}
     </button>`:''}
     <button onclick="closeM()" style="width:100%;padding:12px;border:1px solid var(--border);background:var(--bg);color:var(--t2);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
       ${nuevos.length?'Cancelar':'Cerrar'}
     </button>`);
 }
+// FIN procesarCSV
 
-function confirmarImport(productos){
+let _pendingImport = [];
+function confirmarImport(){
+  const productos = _pendingImport;
+  if(!productos || !productos.length) return;
   CAT.push(...productos);
+  _pendingImport = [];
   sv(); closeM(); catQ='';
   renderCatalogo();
   // Toast de confirmación
@@ -832,7 +844,6 @@ function confirmarImport(productos){
   toast.textContent=`✓ ${productos.length} producto${productos.length!==1?'s':''} importado${productos.length!==1?'s':''}`;
   document.body.appendChild(toast);
   setTimeout(()=>toast.remove(),3000);
-}
 }
 
 let _tmpAl=[], _editId=null;
@@ -875,9 +886,9 @@ function alKey(e){
 }
 function renderAlChips(){
   const el=document.getElementById('p-al-chips'); if(!el)return;
-  el.innerHTML=_tmpAl.map(a=>`<span class="achip">${a}<button onclick="rmAl('${a.replace(/'/,"\\'")}')">&times;</button></span>`).join('');
+  el.innerHTML=_tmpAl.map((a,i)=>`<span class="achip">${a.replace(/</g,'&lt;')}<button onclick="rmAl(${i})">&times;</button></span>`).join('');
 }
-function rmAl(a){_tmpAl=_tmpAl.filter(x=>x!==a);renderAlChips();}
+function rmAl(i){_tmpAl.splice(i,1);renderAlChips();}
 function saveProd(){
   const n=document.getElementById('p-n')?.value.trim();
   if(!n){alert('El nombre es obligatorio');return;}

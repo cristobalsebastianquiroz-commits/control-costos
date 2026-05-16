@@ -299,7 +299,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <!-- ══ Setup / configuración Firebase ══ -->
-<div class="setup-wrap" id="setup-wrap" style="display:none">
+<div class="setup-wrap" id="setup-wrap" style="display:none;pointer-events:none;visibility:hidden">
   <div class="setup-logo">🔥</div>
   <div class="setup-title">Configurar Firebase</div>
   <div class="setup-sub">Conecta tu base de datos en tiempo real para sincronizar entre todos tus dispositivos automáticamente.</div>
@@ -342,7 +342,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
     </div>
     <button class="tb-act" id="tb-act" style="display:none"></button>
-    <button onclick="abrirConfigFirebase()" id="tb-cloud-btn" style="border:none;background:none;cursor:pointer;padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center" title="Configuración Firebase">
+    <button onclick="abrirConfigFirebase()" id="tb-cloud-btn" style="border:none;background:none;cursor:pointer;padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center" title="Configuración Firebase" style="display:none">
       <i class="ti ti-cloud" id="tb-cloud-icon" style="font-size:20px;color:var(--t3)"></i>
     </button>
   </div>
@@ -580,25 +580,45 @@ function abrirConfigFirebase(){
   document.getElementById('setup-wrap').style.display='flex';
 }
 
-async function _autoReconectar(){
-  const saved=localStorage.getItem('cc_fb_config');
-  if(!saved) return false;
+async function _conectarAutomatico(){
+  // ── Credenciales fijas — no requiere configuración manual ──
+  const FB_CONFIG = {
+    apiKey:            "REEMPLAZA_CON_TU_NUEVA_API_KEY",
+    authDomain:        "camara-control.firebaseapp.com",
+    databaseURL:       "https://camara-control-default-rtdb.firebaseio.com",
+    projectId:         "camara-control",
+    storageBucket:     "camara-control.firebasestorage.app",
+    messagingSenderId: "942921368341",
+    appId:             "1:942921368341:web:227d66e8ff3e0d24431f1c"
+  };
+  const TENANT = 'control-costo'; // prefijo de datos en la DB
+
+  _showFbBar('Conectando…', 'sync');
+  document.getElementById('fb-bar').classList.remove('hidden');
+
   try{
-    const cfg=JSON.parse(saved);
-    if(!cfg.apiKey||!cfg.databaseURL) return false;
-    // Autorellenar y conectar
-    document.getElementById('fb-apikey').value=cfg.apiKey||'';
-    document.getElementById('fb-authdomain').value=cfg.authDomain||'';
-    document.getElementById('fb-dburl').value=cfg.databaseURL||'';
-    document.getElementById('fb-projectid').value=cfg.projectId||'';
-    document.getElementById('fb-appid').value=cfg.appId||'';
-    document.getElementById('fb-tenant').value=cfg.tenant||'default';
-    _showFbBar('Reconectando…', 'sync');
-    document.getElementById('fb-bar').classList.remove('hidden');
-    await conectarFirebase();
-    return true;
-  } catch(e){ console.warn('Auto-reconnect failed:', e); return false; }
+    const { initializeApp, getDatabase } = window._fbSDK;
+    const app  = initializeApp(FB_CONFIG, 'cc-app');
+    _fbDB      = getDatabase(app);
+    _fbTenant  = TENANT;
+    _fbMode    = 'firebase';
+    _fbReady   = true;
+
+    await _fbFirstSync();
+    _fbSubscribe();
+
+    _showFbBar('Sincronizado · '+DEVICE.label, 'ok', true);
+    go('home', document.querySelectorAll('.bnav')[0]);
+
+  } catch(err){
+    console.error('Firebase auto-connect error:', err);
+    _showFbBar('Sin conexión — modo local', 'err', true);
+    go('home', document.querySelectorAll('.bnav')[0]);
+  }
 }
+
+// Mantenemos _autoReconectar como alias para no romper nada
+async function _autoReconectar(){ return false; }
 
 /* ── Cocinas/destinos ── */
 const COCINAS=[
@@ -2543,35 +2563,15 @@ function addCF(){
    INIT
 ══════════════════════════════════════ */
 (async function init(){
-  // Mostrar badge de dispositivo en setup
-  const lbl=document.getElementById('setup-device-lbl');
-  if(lbl) lbl.textContent=DEVICE.label+' · '+(DEVICE.type==='desktop'?'Escritorio':DEVICE.type==='tablet'?'Tablet':'Móvil');
-  const badge=document.getElementById('setup-device-badge');
-  if(badge){
-    badge.innerHTML=`<i class="ti ${DEVICE.icon}"></i> ${DEVICE.label}`;
-  }
-
-  // Esperar que el SDK de Firebase esté disponible
+  // ── Esperar SDK de Firebase ──
   if(!window._fbSDK){
     await new Promise(r=>{
       window.addEventListener('fbsdkready',r,{once:true});
-      setTimeout(r,4000); // timeout de seguridad
+      setTimeout(r,5000);
     });
   }
-
-  // Intentar auto-reconexión
-  const reconectado = await _autoReconectar();
-  if(!reconectado){
-    // Verificar si hay config guardada pero falló → usar modo local
-    const saved=localStorage.getItem('cc_fb_config');
-    if(!saved || saved===''){
-      // Primera vez: mostrar pantalla setup
-      document.getElementById('setup-wrap').style.display='flex';
-      return; // no continuar — el setup llamará go() al terminar
-    }
-    // Config inválida: usar local
-    go('home', document.querySelectorAll('.bnav')[0]);
-  }
+  // ── Conectar automáticamente con credenciales fijas ──
+  await _conectarAutomatico();
 })();
 </script>
 </body>

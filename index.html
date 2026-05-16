@@ -4,162 +4,191 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ControlCostos">
-<meta name="theme-color" content="#1a6b4a">
-<title>ControlCostos · Restaurante v2</title>
+<meta name="theme-color" content="#0f4c35">
+<title>CostControl</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --g:#1a6b4a;--gl:#e1f5ee;--gd:#0d4a32;
-  --r:#a32d2d;--rl:#fcebeb;
-  --a:#854f0b;--al:#faeeda;
-  --b:#185fa5;--bl:#e6f1fb;
-  --bg:#f5f5f0;--card:#fff;--border:#e0e0e0;
-  --t1:#1a1a1a;--t2:#444;--t3:#888;--t4:#bbb;
+  --g:#1d9e75;--gl:#dff2eb;--gd:#0d6e50;
+  --r:#d93025;--rl:#fce8e6;
+  --a:#e37400;--al:#fef3e2;
+  --b:#1a73e8;--bl:#e8f0fe;
+  --bg:#f5f6f8;--card:#fff;
+  --border:#e4e7ec;--border2:#f0f2f5;
+  --t1:#111827;--t2:#4b5563;--t3:#9ca3af;--t4:#e5e7eb;
+  --sh:0 1px 4px rgba(0,0,0,.07);
+  --sh2:0 8px 24px rgba(0,0,0,.12);
 }
-body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--t1);overscroll-behavior:none}
-.shell{max-width:480px;margin:0 auto;display:flex;flex-direction:column;height:100dvh;height:100vh}
-.topbar{background:#fff;border-bottom:0.5px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:20}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t1);overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+.shell{max-width:480px;margin:0 auto;display:flex;flex-direction:column;height:100dvh}
+/* ── Topbar ── */
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:40}
 .topbar-left{display:flex;align-items:center;gap:10px}
-.back-btn{border:none;background:none;cursor:pointer;color:#666;font-size:20px;padding:2px;display:none;align-items:center}
-.tb-title{font-size:16px;font-weight:600}
+.back-btn{border:none;background:none;cursor:pointer;color:var(--t2);font-size:22px;padding:2px;display:none;align-items:center}
+.tb-title{font-size:16px;font-weight:700;letter-spacing:-.3px;line-height:1.2}
 .tb-sub{font-size:11px;color:var(--t3);margin-top:1px}
-.tb-action{border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit}
-.scroll{flex:1;overflow-y:auto;padding:12px 12px 90px;-webkit-overflow-scrolling:touch}
-.bottomnav{background:#fff;border-top:0.5px solid var(--border);display:flex;position:sticky;bottom:0;z-index:20;padding-bottom:env(safe-area-inset-bottom)}
-.bnav{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;cursor:pointer;border:none;background:none;color:#999;font-size:9px;font-family:inherit}
-.bnav i{font-size:20px}.bnav.on{color:var(--g)}
+.tb-act{border:none;background:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;color:var(--g);padding:6px 8px;border-radius:8px}
+/* ── Scroll ── */
+.scroll{flex:1;overflow-y:auto;padding:14px 14px 100px;-webkit-overflow-scrolling:touch}
+/* ── Bottom nav ── */
+.bottomnav{background:#fff;border-top:1px solid var(--border);display:flex;position:sticky;bottom:0;z-index:40;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bnav{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 7px;cursor:pointer;border:none;background:none;color:var(--t3);font-size:9px;font-weight:600;font-family:inherit;letter-spacing:.3px;transition:color .12s}
+.bnav i{font-size:22px}
+.bnav.on{color:var(--g)}
+/* ── Pages ── */
 .page{display:none}.page.on{display:block}
-.fab{background:var(--g);color:#fff;border:none;border-radius:14px;padding:0 20px;height:50px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;width:100%;justify-content:center;margin-bottom:10px}
-.fab:active{background:var(--gd)}
-.fab-sm{background:var(--g);color:#fff;border:none;border-radius:10px;padding:0 16px;height:42px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;justify-content:center}
-.btn-out{width:100%;padding:13px;border-radius:12px;border:0.5px solid var(--border);background:#fff;color:var(--t1);font-size:14px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px;text-align:left}
-.btn-out i{font-size:20px;color:#888}
-.btn-out:active{background:var(--bg)}
-.btn-scan{width:100%;padding:14px;border-radius:12px;border:2px solid var(--g);background:var(--gl);color:var(--gd);font-size:14px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:12px;margin-bottom:8px;text-align:left}
-.btn-scan i{font-size:22px}
-.btn-scan:active{background:#c8edd9}
-.card{background:#fff;border-radius:14px;border:0.5px solid var(--border);overflow:hidden;margin-bottom:10px}
+/* ── Buttons ── */
+.btn-p{background:var(--g);color:#fff;border:none;border-radius:12px;padding:0 20px;height:50px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;width:100%;justify-content:center;margin-bottom:10px;box-shadow:0 2px 10px rgba(29,158,117,.28)}
+.btn-p:active{background:var(--gd);transform:scale(.98)}
+.btn-o{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--t1);font-size:14px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px;box-shadow:var(--sh);text-align:left}
+.btn-o i{font-size:20px;color:var(--t2);flex-shrink:0}
+.btn-o:active{background:var(--bg)}
+.btn-scan{width:100%;padding:14px;border-radius:12px;border:2px solid var(--g);background:var(--gl);color:var(--gd);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.btn-scan i{font-size:22px;flex-shrink:0}
+/* ── Cards ── */
+.card{background:#fff;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:10px;box-shadow:var(--sh)}
 .cp{padding:14px}
-.slbl{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 8px}
-.met-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px}
-.met{background:var(--bg);border-radius:10px;padding:12px 14px}
-.met-l{font-size:11px;color:#666;margin-bottom:4px}
-.met-v{font-size:20px;font-weight:600}
-.met-s{font-size:11px;color:var(--t3);margin-top:2px}
-.row{display:flex;align-items:center;padding:13px 14px;border-bottom:0.5px solid #f0f0f0;gap:10px}
+/* ── Labels ── */
+.slbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.9px;margin:18px 0 8px}
+/* ── Metrics ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.met{background:#fff;border-radius:12px;border:1px solid var(--border);padding:13px 14px;box-shadow:var(--sh)}
+.met-l{font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600}
+.met-v{font-size:21px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.met-s{font-size:11px;color:var(--t3);margin-top:3px}
+/* ── Row list ── */
+.row{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border2);gap:10px}
 .row:last-child{border-bottom:none}
 .row-info{flex:1;min-width:0}
-.row-t{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row-s{font-size:12px;color:var(--t3);margin-top:2px}
+.row-t{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-s{font-size:11px;color:var(--t3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row-r{text-align:right;flex-shrink:0}
-.row-amt{font-size:14px;font-weight:600}
+.row-amt{font-size:14px;font-weight:700}
 .chev{font-size:16px;color:var(--t4);flex-shrink:0}
-.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.bar-lbl{width:76px;flex-shrink:0;font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bar-track{flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden}
-.bar-fill{height:100%;background:var(--g);border-radius:4px}
-.bar-val{width:68px;text-align:right;flex-shrink:0;font-weight:600;font-size:12px}
+/* ── Forms ── */
 .ff{margin-bottom:12px}
-.ff label{font-size:12px;color:#666;display:block;margin-bottom:5px;font-weight:500}
-.ff input,.ff select{width:100%;font-size:15px;padding:11px 12px;border:0.5px solid var(--border);border-radius:10px;background:#fff;color:var(--t1);font-family:inherit;-webkit-appearance:none}
-.ff input:focus,.ff select:focus{outline:none;border-color:var(--g)}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.ff label{font-size:12px;color:var(--t2);display:block;margin-bottom:5px;font-weight:600}
+.ff input,.ff select{width:100%;font-size:15px;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--t1);font-family:inherit;-webkit-appearance:none}
+.ff input:focus,.ff select:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
 .bg{background:var(--gl);color:var(--gd)}
 .ba{background:var(--al);color:var(--a)}
 .bb{background:var(--bl);color:var(--b)}
 .br{background:var(--rl);color:var(--r)}
-.res-item{padding:12px 14px;border-bottom:0.5px solid #f0f0f0}
-.res-item:last-child{border-bottom:none}
-.res-name{font-size:14px;font-weight:600}
-.res-path{font-size:11px;color:var(--t3);margin-top:2px}
-.res-bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:8px}
-.res-price{font-size:14px;font-weight:600}
-.tax-pill{font-size:11px;padding:2px 7px;border-radius:8px;background:var(--rl);color:var(--r);margin-top:4px;display:inline-block}
-.tax-pill.none{background:var(--gl);color:var(--gd)}
-.total-row{display:flex;justify-content:space-between;align-items:center;padding:14px;border-top:0.5px solid #f0f0f0}
-.total-lbl{font-size:13px;color:#666}
-.total-v{font-size:20px;font-weight:600}
-.chip{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg);border-radius:8px;margin-bottom:6px;font-size:13px}
-.chip-del{border:none;background:none;color:var(--t4);cursor:pointer;font-size:18px;padding:0 4px}
-.hint{font-size:12px;margin:-4px 0 10px;min-height:16px}
-.info-box{background:var(--bl);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--b);margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
-.warn-box{background:var(--al);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--a);margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
-.ok-box{background:var(--gl);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--gd);margin-bottom:10px;display:flex;gap:8px;align-items:flex-start}
-.danger-box{background:var(--rl);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--r);margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
-.empty{text-align:center;padding:48px 16px}
-.empty i{font-size:44px;color:var(--t4);display:block;margin-bottom:12px}
-.empty p{font-size:14px;color:var(--t3);margin-bottom:16px}
-.ocr-box{background:#fff;border-radius:14px;border:0.5px solid var(--border);padding:20px;margin-bottom:10px;text-align:center}
-.ocr-icon{font-size:40px;color:var(--g);display:block;margin-bottom:12px}
-.ocr-msg{font-size:14px;font-weight:600;margin-bottom:8px}
-.ocr-sub{font-size:12px;color:var(--t3);margin-bottom:14px}
-.ocr-bar-track{height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;margin:0 20px}
-.ocr-bar-fill{height:100%;background:var(--g);border-radius:3px;transition:width 0.3s}
+/* ── Info boxes ── */
+.ibox{border-radius:10px;padding:11px 13px;font-size:12px;margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.ibox.blue{background:var(--bl);color:var(--b)}
+.ibox.green{background:var(--gl);color:var(--gd)}
+.ibox.orange{background:var(--al);color:var(--a)}
+.ibox.red{background:var(--rl);color:var(--r)}
+/* ── Empty ── */
+.empty{text-align:center;padding:44px 20px}
+.empty i{font-size:50px;color:var(--t4);display:block;margin-bottom:14px}
+.empty-t{font-size:16px;font-weight:700;margin-bottom:6px}
+.empty-s{font-size:13px;color:var(--t3);line-height:1.5;margin-bottom:20px}
+/* ── Bar chart ── */
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.bar-lbl{width:96px;flex-shrink:0;font-size:12px;color:var(--t2);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:8px;background:var(--border2);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.bar-val{width:72px;text-align:right;flex-shrink:0;font-weight:700;font-size:12px}
+/* ── Seg control ── */
+.seg{display:flex;background:var(--bg);border-radius:10px;padding:3px;margin-bottom:12px;border:1px solid var(--border)}
+.seg-btn{flex:1;padding:8px 4px;border:none;background:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--t3);transition:all .12s}
+.seg-btn.on{background:#fff;color:var(--t1);box-shadow:var(--sh)}
+/* ── Total row ── */
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-top:1px solid var(--border2);background:var(--bg)}
+.total-lbl{font-size:13px;color:var(--t2);font-weight:500}
+.total-v{font-size:22px;font-weight:800}
+/* ── Catálogo item ── */
+.citem{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border2);gap:10px;cursor:pointer}
+.citem:last-child{border-bottom:none}
+.citem:active{background:var(--bg)}
+.cicon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.cinfo{flex:1;min-width:0}
+.cname{font-size:14px;font-weight:600}
+.cpath{font-size:11px;color:var(--t3);margin-top:1px}
+.calias{font-size:11px;color:var(--b);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ── Search ── */
+.srap{position:relative;margin-bottom:10px}
+.srap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--t3);pointer-events:none}
+.sinp{width:100%;font-size:14px;padding:11px 12px 11px 38px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--t1);font-family:inherit;box-shadow:var(--sh)}
+.sinp:focus{outline:none;border-color:var(--g)}
+/* ── Alias chips ── */
+.achip{display:inline-flex;align-items:center;gap:4px;background:var(--bl);color:var(--b);border-radius:6px;font-size:11px;font-weight:600;padding:3px 8px;margin:2px 2px 2px 0}
+.achip button{background:none;border:none;color:var(--b);cursor:pointer;padding:0;font-size:14px;opacity:.7;line-height:1}
+/* ── Drop results ── */
+.drop{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--sh2);margin-top:-6px;margin-bottom:10px;max-height:260px;overflow-y:auto}
+.dopt{padding:11px 14px;border-bottom:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;gap:10px}
+.dopt:last-child{border-bottom:none}
+.dopt:active{background:var(--bg)}
+/* ── Producto línea factura ── */
+.pline{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--sh)}
+.pline-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.pline-name{font-size:14px;font-weight:700}
+.pline-path{font-size:11px;color:var(--t3);margin-top:2px}
+.pline-inp-row{display:grid;grid-template-columns:80px 1fr auto;gap:6px;margin-top:10px;align-items:end}
+.ninp{font-size:14px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--t1);font-family:inherit;text-align:right;width:100%}
+.ninp:focus{outline:none;border-color:var(--g);background:#fff}
+.ninp-lbl{font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px}
+.del-btn{border:none;background:var(--rl);color:var(--r);border-radius:8px;width:34px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;flex-shrink:0;align-self:flex-end}
+.tpill{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700;margin-top:6px}
+.tp-ok{background:var(--gl);color:var(--gd)}
+.tp-ex{background:var(--rl);color:var(--r)}
+/* ── OCR progress ── */
+.ocr-card{background:#fff;border-radius:14px;border:1px solid var(--border);padding:24px 20px;text-align:center;box-shadow:var(--sh)}
+.ocr-icon{font-size:44px;color:var(--g);display:block;margin-bottom:14px}
+.ocr-msg{font-size:15px;font-weight:700;margin-bottom:6px}
+.ocr-sub{font-size:12px;color:var(--t3);margin-bottom:16px}
+.ocr-track{height:6px;background:var(--border2);border-radius:3px;overflow:hidden;margin:0 16px}
+.ocr-fill{height:100%;background:var(--g);border-radius:3px;transition:width .3s}
 .ocr-pct{font-size:11px;color:var(--t3);margin-top:6px}
-.edit-item{padding:10px 14px;border-bottom:0.5px solid #f0f0f0;background:#fff}
-.edit-item:last-child{border-bottom:none}
-.edit-row{display:flex;gap:6px;margin-top:6px}
-.edit-inp{flex:1;font-size:13px;padding:6px 8px;border:0.5px solid var(--border);border-radius:7px;background:#fff;color:var(--t1);font-family:inherit}
-.edit-inp:focus{outline:none;border-color:var(--g)}
-.tax-row-edit{display:flex;align-items:center;padding:12px 14px;border-bottom:0.5px solid #f0f0f0;gap:10px;cursor:pointer}
-.tax-row-edit:last-child{border-bottom:none}
-.tax-icon-box{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.edit-panel{background:var(--bg);padding:12px 14px;border-bottom:0.5px solid #f0f0f0;display:none}
-.edit-panel.open{display:block}
-.rate-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.rate-lbl{font-size:12px;color:#666;width:130px;flex-shrink:0}
-.rate-input{font-size:14px;padding:7px 10px;border:0.5px solid var(--border);border-radius:8px;background:#fff;color:var(--t1);font-family:inherit;width:80px;text-align:right}
-.rate-input:focus{outline:none;border-color:var(--g)}
-.save-mini{background:var(--g);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:6px;width:100%}
-/* Centro de costos */
-.pe-ring{width:120px;height:120px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative}
-.pe-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
-.pe-inner{text-align:center;position:relative;z-index:1}
-.pe-pct{font-size:22px;font-weight:700}
-.pe-lbl{font-size:11px;color:var(--t3)}
-.cf-item{display:flex;align-items:center;padding:11px 14px;border-bottom:0.5px solid #f0f0f0;gap:10px}
-.cf-item:last-child{border-bottom:none}
-.cf-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.cf-name{flex:1;font-size:13px}
-.cf-amt{font-size:13px;font-weight:600}
-.cf-del{border:none;background:none;color:var(--t4);cursor:pointer;padding:0 2px;font-size:16px}
-.seg{display:flex;background:var(--bg);border-radius:10px;padding:3px;margin-bottom:12px}
-.seg-btn{flex:1;padding:8px 4px;border:none;background:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--t3);transition:all 0.15s}
-.seg-btn.on{background:#fff;color:var(--t1);box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.kpi-big{background:var(--g);color:#fff;border-radius:14px;padding:20px;margin-bottom:10px;text-align:center}
-.kpi-big .val{font-size:32px;font-weight:700;line-height:1}
-.kpi-big .lbl{font-size:12px;opacity:.8;margin-top:6px}
-.kpi-big .sub{font-size:13px;opacity:.9;margin-top:4px}
-.kpi-warn{background:var(--al);color:var(--a);border-radius:14px;padding:20px;margin-bottom:10px;text-align:center}
-.kpi-warn .val{font-size:28px;font-weight:700;line-height:1}
-.kpi-warn .lbl{font-size:12px;opacity:.8;margin-top:6px}
-.kpi-danger{background:var(--rl);color:var(--r);border-radius:14px;padding:20px;margin-bottom:10px;text-align:center}
-.kpi-danger .val{font-size:28px;font-weight:700;line-height:1}
-.kpi-danger .lbl{font-size:12px;margin-top:6px}
-.sim-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.sim-lbl{font-size:13px;color:#666;flex:1}
-.sim-val{font-size:14px;font-weight:600;width:90px;text-align:right}
-.range-inp{width:100%;margin:6px 0 2px;accent-color:var(--g)}
-.divider{height:0.5px;background:var(--border);margin:14px 0}
-/* Tabla costos variables */
-.tbl-wrap{overflow-x:auto;margin-bottom:10px}
-table.cost-tbl{width:100%;border-collapse:collapse;font-size:12px}
-.cost-tbl th{background:var(--bg);padding:8px 10px;text-align:left;font-weight:600;color:var(--t3);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
-.cost-tbl td{padding:9px 10px;border-bottom:0.5px solid #f0f0f0}
-.cost-tbl tr:last-child td{border-bottom:none}
-.cost-tbl td:last-child{text-align:right;font-weight:600}
-/* Escenarios */
-.esc-card{border-radius:12px;padding:14px;margin-bottom:8px;border:0.5px solid transparent}
-.esc-card.verde{background:#e1f5ee;border-color:#a8dbc7}
-.esc-card.amarillo{background:#faeeda;border-color:#e8c78b}
-.esc-card.rojo{background:#fcebeb;border-color:#e8a8a8}
-.esc-title{font-size:13px;font-weight:700;margin-bottom:4px}
-.esc-row{display:flex;justify-content:space-between;font-size:12px;margin-top:4px}
+/* ── Match chips (resultado OCR) ── */
+.match-item{padding:11px 14px;border-bottom:1px solid var(--border2)}
+.match-item:last-child{border-bottom:none}
+.match-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.match-ocr{font-size:11px;color:var(--t3);margin-top:2px;font-style:italic}
+/* ── KPI grande ── */
+.kpi-big{border-radius:16px;padding:22px 20px;margin-bottom:10px;text-align:center}
+.kpi-big.verde{background:linear-gradient(135deg,#0d6e50,#1d9e75);color:#fff}
+.kpi-big.azul{background:linear-gradient(135deg,#1251ab,#1a73e8);color:#fff}
+.kpi-big.naranja{background:linear-gradient(135deg,#b84d00,#e37400);color:#fff}
+.kpi-big.rojo{background:linear-gradient(135deg,#9e1a1a,#d93025);color:#fff}
+.kpi-val{font-size:38px;font-weight:800;letter-spacing:-1.5px;line-height:1}
+.kpi-lbl{font-size:12px;opacity:.85;margin-top:7px;font-weight:600}
+.kpi-sub{font-size:11px;opacity:.7;margin-top:4px}
+/* ── Chart columns ── */
+.chart-cols{display:flex;align-items:flex-end;gap:6px;height:90px;padding-bottom:4px}
+.chart-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;min-height:3px}
+.chart-lbl{font-size:9px;color:var(--t3);text-align:center;line-height:1.2;word-break:break-all}
+/* ── Modal ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:92dvh;overflow-y:auto;padding:20px 16px 40px;box-shadow:0 -8px 40px rgba(0,0,0,.18)}
+.mhandle{width:40px;height:4px;background:var(--t4);border-radius:2px;margin:0 auto 18px}
+.mtitle{font-size:17px;font-weight:800;margin-bottom:16px;letter-spacing:-.3px}
+/* ── Proyección ── */
+.prow{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border2)}
+.prow:last-child{border-bottom:none}
+.plbl{font-size:13px;color:var(--t2)}
+.pval{font-size:14px;font-weight:700}
+.esc{border-radius:12px;padding:14px;margin-bottom:8px}
+.esc.ok{background:var(--gl);border:1px solid #a8dbc7}
+.esc.warn{background:var(--al);border:1px solid #f0c98a}
+.esc.bad{background:var(--rl);border:1px solid #f0a8a8}
+.esc-title{font-size:13px;font-weight:700;margin-bottom:6px}
+.esc-row{display:flex;justify-content:space-between;font-size:12px;margin-top:3px;color:var(--t2)}
+/* ── Slider ── */
+.range{width:100%;margin:8px 0 4px;accent-color:var(--g)}
+/* ── Barra triangular (gauge) ── */
+.gauge-wrap{padding:12px 0 4px;text-align:center}
+.gauge-val{font-size:28px;font-weight:800;letter-spacing:-1px}
+.gauge-bar{height:10px;border-radius:5px;background:linear-gradient(to right,var(--r),var(--a),var(--g));margin:8px 0 4px;position:relative}
+.gauge-marker{position:absolute;top:-4px;width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--t1);transform:translateX(-50%);transition:left .4s ease}
 </style>
 </head>
 <body>
@@ -167,1192 +196,1213 @@ table.cost-tbl{width:100%;border-collapse:collapse;font-size:12px}
   <div class="topbar">
     <div class="topbar-left">
       <button class="back-btn" id="back-btn" onclick="goBack()"><i class="ti ti-arrow-left"></i></button>
-      <div><div class="tb-title" id="tb-title">Resumen</div><div class="tb-sub" id="tb-sub">Control de costos</div></div>
+      <div>
+        <div class="tb-title" id="tb-title">Resumen</div>
+        <div class="tb-sub"  id="tb-sub">Control de costos</div>
+      </div>
     </div>
-    <button class="tb-action" id="tb-act" style="display:none"></button>
+    <button class="tb-act" id="tb-act" style="display:none"></button>
   </div>
   <div class="scroll" id="scroll">
     <div class="page on" id="pg-home"></div>
-    <div class="page"    id="pg-facturas"></div>
-    <div class="page"    id="pg-nueva"></div>
-    <div class="page"    id="pg-pe"></div>
-    <div class="page"    id="pg-impuestos"></div>
+    <div class="page"    id="pg-catalogo"></div>
+    <div class="page"    id="pg-factura"></div>
+    <div class="page"    id="pg-analisis"></div>
+    <div class="page"    id="pg-proyeccion"></div>
   </div>
   <nav class="bottomnav">
-    <button class="bnav on"  onclick="go('home',this)"><i class="ti ti-home"></i>Inicio</button>
-    <button class="bnav"     onclick="go('facturas',this)"><i class="ti ti-file-invoice"></i>Facturas</button>
-    <button class="bnav"     onclick="go('nueva',this)"><i class="ti ti-plus"></i>Nueva</button>
-    <button class="bnav"     onclick="go('pe',this)"><i class="ti ti-chart-line"></i>Proyección</button>
-    <button class="bnav"     onclick="go('impuestos',this)"><i class="ti ti-receipt-tax"></i>Impuestos</button>
+    <button class="bnav on" onclick="go('home',this)">      <i class="ti ti-home"></i>Inicio</button>
+    <button class="bnav"    onclick="go('catalogo',this)">  <i class="ti ti-books"></i>Catálogo</button>
+    <button class="bnav"    onclick="go('factura',this)">   <i class="ti ti-scan"></i>Factura</button>
+    <button class="bnav"    onclick="go('analisis',this)">  <i class="ti ti-chart-bar"></i>Análisis</button>
+    <button class="bnav"    onclick="go('proyeccion',this)"><i class="ti ti-trending-up"></i>Proyección</button>
   </nav>
 </div>
-<input type="file" id="file-cam" accept="image/*" capture="environment" style="display:none" onchange="onFile(this)">
-<input type="file" id="file-gal" accept="image/*" style="display:none" onchange="onFile(this)">
+
+<!-- Modal overlay -->
+<div class="overlay" id="ov" style="display:none" onclick="closeModal(event)">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <div class="mhandle"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<input type="file" id="inp-cam" accept="image/*" capture="environment" style="display:none" onchange="onImg(this)">
+<input type="file" id="inp-gal" accept="image/*"                       style="display:none" onchange="onImg(this)">
 
 <script>
-/* ════════════════════════════════
-   IMPUESTOS SII CHILE
-   ════════════════════════════════ */
-const TAXES_DEF={
-  general:[{id:'iva',nombre:'IVA general',desc:'Mayoría de productos',icon:'ti-receipt',ic:'#e1f5ee',icol:'#0f6e56',iva:19,ad:0,nota:'Art. 14 DL 825',tipo:'normal',cats:['Verduras','Frutas','Lácteos','Panadería','Abarrotes','Desechables','Limpieza','Proteínas','Pastelería']}],
-  bebidas:[
-    {id:'bb',nombre:'Bebidas analcohólicas',desc:'<15g azúcar/240ml',icon:'ti-bottle',ic:'#faeeda',icol:'#854f0b',iva:19,ad:10,nota:'Art.42 a) LIVS',tipo:'adicional',cats:['Aguas','Jugos']},
-    {id:'ba',nombre:'Bebidas alto azúcar',desc:'>15g/240ml · sello negro',icon:'ti-droplet',ic:'#fcebeb',icol:'#a32d2d',iva:19,ad:18,nota:'Art.42 a) LIVS',tipo:'adicional',cats:['Bebidas azucaradas']},
-    {id:'cv',nombre:'Vinos, cerveza y sidra',desc:'Alcohólicas fermentadas',icon:'ti-beer',ic:'#faeeda',icol:'#854f0b',iva:19,ad:20.5,nota:'Art.42 c) LIVS',tipo:'adicional',cats:['Cervezas','Vinos']},
-    {id:'lc',nombre:'Licores y destilados',desc:'Pisco, whisky, aguardiente',icon:'ti-glass-full',ic:'#fcebeb',icol:'#a32d2d',iva:19,ad:31.5,nota:'Art.42 b) LIVS',tipo:'adicional',cats:[]}
-  ],
-  carnes:[
-    {id:'va',nombre:'Vacuno (IVA anticipado)',desc:'5% adicional sobre venta',icon:'ti-meat',ic:'#fcebeb',icol:'#a32d2d',iva:19,ad:5,nota:'Código 17/18 SII',tipo:'anticipado',cats:['Vacuno']},
-    {id:'ha',nombre:'Harina de trigo',desc:'12% IVA anticipado',icon:'ti-bread',ic:'#fcebeb',icol:'#a32d2d',iva:19,ad:12,nota:'Código 18 SII',tipo:'anticipado',cats:['Harinas']},
-    {id:'po',nombre:'Pollo, cerdo y huevos',desc:'IVA normal',icon:'ti-feather',ic:'#e1f5ee',icol:'#0f6e56',iva:19,ad:0,nota:'IVA normal',tipo:'normal',cats:['Pollo','Cerdo','Huevos']},
-    {id:'pe',nombre:'Pescado y mariscos',desc:'IVA normal',icon:'ti-fish',ic:'#e1f5ee',icol:'#0f6e56',iva:19,ad:0,nota:'IVA normal',tipo:'normal',cats:['Salmón','Mariscos','Pescados']}
-  ]
-};
-
-/* ════════════════════════════════
-   CATÁLOGO DE PRODUCTOS
-   Adaptado a facturas chilenas reales
-   ════════════════════════════════ */
-const CAT={
-  /* Verduras */
-  "palta":["Cocina caliente","Verduras","Paltas"],"aguacate":["Cocina caliente","Verduras","Paltas"],
-  "tomate":["Cocina caliente","Verduras","Tomates"],"tomate cherry":["Cocina caliente","Verduras","Tomates"],
-  "lechuga":["Cocina caliente","Verduras","Hojas verdes"],"espinaca":["Cocina caliente","Verduras","Hojas verdes"],"rucula":["Cocina caliente","Verduras","Hojas verdes"],
-  "cebolla":["Cocina caliente","Verduras","Cebollas"],"cebolla morada":["Cocina caliente","Verduras","Cebollas"],
-  "pimenton":["Cocina caliente","Verduras","Pimentones"],"pimiento":["Cocina caliente","Verduras","Pimentones"],
-  "zanahoria":["Cocina caliente","Verduras","Raíces"],"papa":["Cocina caliente","Verduras","Raíces"],"papas":["Cocina caliente","Verduras","Raíces"],"zapallo":["Cocina caliente","Verduras","Raíces"],"betarraga":["Cocina caliente","Verduras","Raíces"],
-  /* Proteínas */
-  "pollo":["Cocina caliente","Proteínas","Pollo"],"pechuga":["Cocina caliente","Proteínas","Pollo"],"trutro":["Cocina caliente","Proteínas","Pollo"],"muslo":["Cocina caliente","Proteínas","Pollo"],
-  "vacuno":["Cocina caliente","Proteínas","Vacuno"],"lomo":["Cocina caliente","Proteínas","Vacuno"],"filete":["Cocina caliente","Proteínas","Vacuno"],"asado":["Cocina caliente","Proteínas","Vacuno"],"osobuco":["Cocina caliente","Proteínas","Vacuno"],"carne":["Cocina caliente","Proteínas","Vacuno"],
-  "salmon":["Cocina caliente","Proteínas","Salmón"],"salmon":["Cocina caliente","Proteínas","Salmón"],"trucha":["Cocina caliente","Proteínas","Salmón"],
-  "reineta":["Cocina caliente","Proteínas","Pescados"],"merluza":["Cocina caliente","Proteínas","Pescados"],"congrio":["Cocina caliente","Proteínas","Pescados"],"corvina":["Cocina caliente","Proteínas","Pescados"],
-  "filete de reineta":["Cocina caliente","Proteínas","Pescados"],
-  "camarones":["Cocina caliente","Proteínas","Mariscos"],"choritos":["Cocina caliente","Proteínas","Mariscos"],"almejas":["Cocina caliente","Proteínas","Mariscos"],
-  "cerdo":["Cocina caliente","Proteínas","Cerdo"],"costilla":["Cocina caliente","Proteínas","Cerdo"],"panceta":["Cocina caliente","Proteínas","Cerdo"],
-  "huevo":["Cocina caliente","Proteínas","Huevos"],"huevos":["Cocina caliente","Proteínas","Huevos"],
-  /* Lácteos */
-  "leche":["Pastelería","Lácteos","Leche"],"queso":["Pastelería","Lácteos","Quesos"],"mantequilla":["Pastelería","Lácteos","Mantequilla"],"crema":["Pastelería","Lácteos","Cremas"],"yogur":["Desayuno","Lácteos","Yogures"],
-  "crema de leche":["Pastelería","Lácteos","Cremas"],"mantequilla kumey":["Pastelería","Lácteos","Mantequilla"],
-  "leche lonco":["Pastelería","Lácteos","Leche"],
-  /* Frutas */
-  "limon":["Barra","Frutas","Cítricos"],"naranja":["Barra","Frutas","Cítricos"],"pomelo":["Barra","Frutas","Cítricos"],
-  "frutillas":["Pastelería","Frutas","Frutas rojas"],"fresas":["Pastelería","Frutas","Frutas rojas"],"frambuesas":["Pastelería","Frutas","Frutas rojas"],
-  "pina":["Pastelería","Frutas","Tropicales"],"mango":["Pastelería","Frutas","Tropicales"],
-  "manzana":["Desayuno","Frutas","Frutas rojas"],"platano":["Desayuno","Frutas","Tropicales"],
-  /* Panadería / Pastelería */
-  "harina":["Pastelería","Panadería","Harinas"],"azucar":["Pastelería","Panadería","Azúcares"],
-  "pan":["Desayuno","Panadería","Panes"],"marraqueta":["Desayuno","Panadería","Panes"],"hallulla":["Desayuno","Panadería","Panes"],
-  "baguette":["Pastelería","Panadería","Panes"],"baguette mini":["Pastelería","Panadería","Panes"],
-  "ciabatta":["Pastelería","Panadería","Panes"],"ciabatta mini":["Pastelería","Panadería","Panes"],
-  "amasado":["Pastelería","Panadería","Panes"],"amasado campo":["Pastelería","Panadería","Panes"],
-  "pan de molde":["Pastelería","Panadería","Panes"],"pan molde":["Pastelería","Panadería","Panes"],
-  "muffin":["Pastelería","Pastelería","Muffins"],"muffin chip chocolate":["Pastelería","Pastelería","Muffins"],
-  "berlin":["Pastelería","Pastelería","Berlines"],"berlin insumo":["Pastelería","Pastelería","Berlines"],
-  "mini cana":["Pastelería","Pastelería","Pastelería"],"palmera":["Pastelería","Pastelería","Pastelería"],
-  "palmera mini":["Pastelería","Pastelería","Pastelería"],
-  "brownie":["Pastelería","Pastelería","Pasteles"],
-  "medialuna":["Pastelería","Panadería","Medialunas"],"medialuna pagnifique":["Pastelería","Panadería","Medialunas"],
-  "mini top hojaldre":["Pastelería","Pastelería","Pasteles"],
-  /* Abarrotes */
-  "aceite":["Cocina caliente","Abarrotes","Aceites"],
-  "arroz":["Bodega general","Abarrotes","Granos"],"arroz tucapel":["Bodega general","Abarrotes","Granos"],
-  "fideos":["Bodega general","Abarrotes","Pastas"],"pasta":["Bodega general","Abarrotes","Pastas"],
-  "sal":["Bodega general","Abarrotes","Condimentos"],"pimienta":["Bodega general","Abarrotes","Condimentos"],"ajo":["Bodega general","Abarrotes","Condimentos"],"oregano":["Bodega general","Abarrotes","Condimentos"],
-  /* Bebidas */
-  "pepsi":["Barra","Bebidas","Bebidas azucaradas"],"pepsi zero":["Barra","Bebidas","Aguas"],"bilz":["Barra","Bebidas","Bebidas azucaradas"],"crush":["Barra","Bebidas","Bebidas azucaradas"],
-  "pepsi 6pfx4":["Barra","Bebidas","Bebidas azucaradas"],"bilz 6pfx4":["Barra","Bebidas","Bebidas azucaradas"],"crush 6pfx4":["Barra","Bebidas","Bebidas azucaradas"],
-  "coca cola":["Barra","Bebidas","Bebidas azucaradas"],"fanta":["Barra","Bebidas","Bebidas azucaradas"],"sprite":["Barra","Bebidas","Bebidas azucaradas"],
-  "cerveza":["Barra","Bebidas","Cervezas"],"vino":["Barra","Bebidas","Vinos"],"vino tinto":["Barra","Bebidas","Vinos"],"vino blanco":["Barra","Bebidas","Vinos"],
-  "agua":["Barra","Bebidas","Aguas"],"jugo":["Barra","Bebidas","Jugos"],"nectar":["Barra","Bebidas","Jugos"],
-  /* Desechables / Limpieza */
-  "toalla de papel":["Bodega general","Desechables","Papel"],"toalla papel":["Bodega general","Desechables","Papel"],
-  "servilletas":["Bodega general","Desechables","Papel"],"vasos":["Bodega general","Desechables","Vasos"],"bolsas":["Bodega general","Desechables","Bolsas"],
-  "guantes nitrilo":["Bodega general","Limpieza","Utensilios"],"guantes":["Bodega general","Limpieza","Utensilios"],
-  "key higienizante":["Bodega general","Limpieza","Desinfectantes"],"higienizante":["Bodega general","Limpieza","Desinfectantes"],
-  "gala floral":["Bodega general","Limpieza","Detergentes"],"detergente":["Bodega general","Limpieza","Detergentes"],"cloro":["Bodega general","Limpieza","Desinfectantes"],"esponja":["Bodega general","Limpieza","Utensilios"]
-};
-
-/* ════════════════════════════════
-   ESTADO
-   ════════════════════════════════ */
-let DB       = JSON.parse(localStorage.getItem('cc_db_v2') ||'[]');
-let TAXES    = JSON.parse(localStorage.getItem('cc_taxes_v2') ||'null') || JSON.parse(JSON.stringify(TAXES_DEF));
-let extraCat = JSON.parse(localStorage.getItem('cc_extra_v2') ||'{}');
-// Centro de costos
-let PE       = JSON.parse(localStorage.getItem('cc_pe_v2') || JSON.stringify({
-  ventaMensual: 0,
-  margenBruto: 35,
-  cfijos: [],
-  diasMes: 26,
-  ticketPromedio: 0,
-  coberturas: 0,
-  turnosPorDia: 2
+/* ══════════════════════════════════════
+   PERSISTENCIA
+══════════════════════════════════════ */
+let CAT  = JSON.parse(localStorage.getItem('cc_cat')  || '[]');
+let FAC  = JSON.parse(localStorage.getItem('cc_fac')  || '[]');
+let CFG  = JSON.parse(localStorage.getItem('cc_cfg')  || JSON.stringify({
+  margen:35, diasMes:26, turnosDia:2, costosF:[]
 }));
-let manItems=[], scanItems=[], fProv='', fFecha=todayStr(), step='choose', prevPage=null;
+const sv  = ()=>{ localStorage.setItem('cc_cat', JSON.stringify(CAT)); };
+const sf  = ()=>{ localStorage.setItem('cc_fac', JSON.stringify(FAC)); };
+const scf = ()=>{ localStorage.setItem('cc_cfg', JSON.stringify(CFG)); };
 
-function saveDB()    { localStorage.setItem('cc_db_v2',    JSON.stringify(DB)); }
-function saveTaxes() { localStorage.setItem('cc_taxes_v2', JSON.stringify(TAXES)); }
-function saveExtra() { localStorage.setItem('cc_extra_v2', JSON.stringify(extraCat)); }
-function savePE()    { localStorage.setItem('cc_pe_v2',    JSON.stringify(PE)); }
-function todayStr()  { return new Date().toISOString().split('T')[0]; }
+/* ══════════════════════════════════════
+   IMPUESTOS SII CHILE
+══════════════════════════════════════ */
+const IMP = {
+  'iva':       {n:'IVA 19%',            iva:19, ad:0   },
+  'iva_azucar':{n:'Beb. alto azúcar',   iva:19, ad:18  },
+  'iva_beban': {n:'Beb. analcohólica',  iva:19, ad:10  },
+  'iva_vino':  {n:'Vino / cerveza',     iva:19, ad:20.5},
+  'iva_licor': {n:'Licores destilados', iva:19, ad:31.5},
+  'iva_vacuno':{n:'Vacuno (anticipado)',iva:19, ad:5   },
+  'iva_harina':{n:'Harina trigo',       iva:19, ad:12  },
+};
+function calcImp(nu, qty, k){
+  const t=IMP[k]||IMP['iva'], neto=Math.round(nu*qty);
+  const iva=Math.round(neto*t.iva/100), ad=Math.round(neto*t.ad/100);
+  return {neto, iva, ad, total:neto+iva+ad, tasa:t.iva+t.ad, t};
+}
 
-/* ════════════════════════════════
+/* ══════════════════════════════════════
    HELPERS
-   ════════════════════════════════ */
-function lookup(name){
-  const k = name.toLowerCase().trim()
-    .replace(/\b(cal\.?\s*\d+|t\/\d+|n[°º]\s*\d+|talla\s*\w+)\b/g,'')
-    .replace(/\d+[.,]?\d*\s*(kg|kgs|gr?|g\b|lt?s?|cc|ml|un|und|pzas?|piezas?|caja|cj|bolsa)\b/gi,'')
-    .replace(/\bcj\s*x?\s*\d+\s*\w+/gi,'')   // "CJ X 8 KG", "CJ X 36 UN"
-    .replace(/\b(grande|chico|mediano|premium|selecto|extra|super|mini|x\d+|sin\s+hueso|s\/h|c\/h|fresc[ao]|congelad[ao]|integr\w*|blanco|entero|entera)\b/gi,'')
-    .replace(/^\d{1,3}\s+/,'')
-    .replace(/\b\d{5,}\b/g,'')
+══════════════════════════════════════ */
+const fmt   = n => '$'+Math.round(n).toLocaleString('es-CL');
+const fmtP  = n => n%1===0?n+'%':n.toFixed(1)+'%';
+const today = ()=>new Date().toISOString().split('T')[0];
+const curM  = ()=>today().slice(0,7);
+const mName = s => new Date(s+'-02').toLocaleDateString('es-CL',{month:'short',year:'2-digit'});
+const AREA_COLORS={'Cocina caliente':'#1d9e75','Pastelería':'#e37400','Barra':'#1a73e8','Bodega general':'#7c3aed','Desayuno':'#e8a020','Limpieza':'#0d9e9e','Desechables':'#888'};
+const aColor = a => AREA_COLORS[a]||'#555';
+const aIcon  = a => ({'Cocina caliente':'ti-tools-kitchen-2','Pastelería':'ti-croissant','Barra':'ti-beer','Bodega general':'ti-box','Desayuno':'ti-coffee','Limpieza':'ti-wash','Desechables':'ti-trash'})[a]||'ti-category';
+
+/* ── Normalización de texto para matching ── */
+function norm(s){
+  return (s||'').toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/\s{2,}/g,' ').trim();
-
-  if(CAT[k]) return CAT[k];
-  if(extraCat[k]) return extraCat[k];
-
-  const normKey = ek => ek.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  for(const ek of Object.keys({...CAT,...extraCat})){
-    const nk = normKey(ek);
-    if(k===nk || k.includes(nk) || nk.includes(k)) return CAT[ek]||extraCat[ek];
-  }
-
-  const words = k.split(' ').filter(w=>w.length>3);
-  for(const w of words){
-    for(const ek of Object.keys({...CAT,...extraCat})){
-      const nk = normKey(ek);
-      if(nk===w || nk.startsWith(w) || w.startsWith(nk)) return CAT[ek]||extraCat[ek];
-    }
-  }
-  return null;
+    .replace(/[^a-z0-9\s]/g,' ')
+    .replace(/\b(kg|kgs|gr?|lt?s?|cc|ml|un|und|pza|caja|cj|bol|paq|tarro|pack|x\d+|\d+x\d+|\d+pfx\d+|lat-?\d+|\d+cc|\d{4,})\b/gi,' ')
+    .replace(/\s+/g,' ').trim();
 }
-function getTax(subcat){
-  for(const g of Object.values(TAXES))
-    for(const t of g)
-      if(t.cats&&t.cats.includes(subcat)) return t;
-  return TAXES.general[0];
+function matchScore(alias, query){
+  const a=norm(alias), q=norm(query);
+  if(!a||!q) return 0;
+  if(a===q) return 100;
+  if(q.includes(a)||a.includes(q)) return 85;
+  const aw=a.split(' '), qw=q.split(' ');
+  const common=aw.filter(w=>w.length>2&&qw.some(qww=>qww.includes(w)||w.includes(qww)));
+  if(common.length/Math.max(aw.length,qw.length)>0.6) return 70;
+  return 0;
 }
-function calcCosts(pu,qty,subcat){
-  const tax=getTax(subcat), neto=Math.round(pu*qty);
-  const ivaA=Math.round(neto*tax.iva/100), adA=Math.round(neto*tax.ad/100);
-  return{neto,ivaAmt:ivaA,adAmt:adA,total:neto+ivaA+adA,tax};
-}
-function fmt(n)  { return '$'+Math.round(n).toLocaleString('es-CL'); }
-function fmtP(n) { return n%1===0?n+'%':n.toFixed(1)+'%'; }
-function wk(d)   { const dt=new Date(d),m=new Date(dt); m.setDate(dt.getDate()-dt.getDay()+1); return m.toLocaleDateString('es-CL',{day:'2-digit',month:'short'}); }
-
-/* ══════════════════════════════════════════════════════════════
-   parseOCRText v3 — Parser optimizado para facturas chilenas
-   
-   Soporta layouts de:
-   - Norte Limpio (CODIGO|CANT|DETALLE|P.UNITARIO|DSCTO|TOTAL)
-   - Bombo SPA (Artículo|Cantidad|P.Unitario|Total)
-   - ICB Food Service (CODIGO|CANT|UNID|DESCRIPCION ITEM|%DSCTOS|PRECIO|VALOR)
-   - Bredenmaster (CODIGO|DESCRIPCION|UM|CANTIDAD|P.UNITARIO|TOTAL)
-   - Layouts genéricos de proveedores chilenos
-   ══════════════════════════════════════════════════════════════ */
-function parseOCRText(rawText){
-
-  /* ── 1. NORMALIZACIÓN AGRESIVA PARA FACTURAS CHILENAS ── */
-  const normalize = s => s
-    .replace(/\r/g,'')
-    .replace(/\t/g,'   ')
-    .replace(/[|¡§]/g,' ')
-    // OCR confunde O↔0, l/I↔1 entre dígitos
-    .replace(/(?<=\d)[oO](?=\d)/g,'0')
-    .replace(/(?<=\d)[lI](?=\d)/g,'1')
-    // Puntuación OCR común: §, ¶, º confundidos
-    .replace(/[§¶°]/g,' ')
-    // Líneas de guiones (separadores de tabla)
-    .replace(/[-_=]{4,}/g,' ');
-
-  const text    = normalize(rawText);
-  const allLines = text.split('\n');
-
-  /* ── 2. PATRONES ESPECÍFICOS FACTURAS CHILENAS ── */
-
-  // Encabezados de descripción (todos los que aparecen en facturas reales CL)
-  const HEADER_DESC_RX = /\b(descrip\w*|articul\w*|art[ií]culo\w*|item\w*|[ií]tem\w*|detalle\w*|producto\w*|nombre\w*|concepto\w*|mercader\w*|glosa\w*|descripcion\s+item)\b/i;
-  const HEADER_QTY_RX  = /\b(cant\.?\w*|qty\w*|unid\.?\w*|bultos?|kilos?|kg\b|cantidad)\b/i;
-  const HEADER_PRICE_RX = /\b(precio\w*|valor\w*|p\.?\s*unit\w*|p\.?\s*neto\w*|monto\w*|importe\w*|p\.unitario|total\b)\b/i;
-
-  // Ruido total (líneas que NUNCA son productos)
-  const NOISE_RX = /^(rut\b|giro\b|direcci[oó]n?\b|fono\b|tel[eé]f?\w*|email|@|www\.|n[°ºo]?\s*\d|folio\b|fecha\b|hora\b|caja\b|vendedor|cajero|turno|subtotal\b|sub[\s\-]?total|neto\b|iva\b|19\s*%|exento|total\b|descuento\w*|recargo|vuelto|efectivo|tarjeta|d[eé]bito|cr[eé]dito|propina|gracias|atendido|sucursal|local\b|p[aá]gina\b|hoja\b|observaci|condicion|vencimiento|iaba|cancelado|son:|ciento|doscient|trescient|cuatrocient|quinient|seiscient|seis|siete\s*mil|ocho\s*mil|nueve\s*mil|timbre|res\.\s*\d|verifique|s\.i\.i\.|rut\s*cliente|fecha\s*emis|forma\s*de\s*pago|cond\.\s*pago|doc\.\s*interno|ref\.\s*cliente|nota\s*dir|control\b|vendedor|ref\b|o\.c\.n|n\.p\.g|vend)/i;
-
-  // Códigos internos de proveedor (ej: 15225202, 1039153C1, 105154330, 90302281)
-  const CODE_RX = /^[0-9A-Z]{6,12}[A-Z0-9]?\s/;
-
-  // Unidades de factura chilena
-  const UNIT_RX = /\b(c60|c100|c120|cj\b|kg\b|lt\b|un\b|und\b|unid\b|paq\b|bol\b|bsa\b|bls\b|caja\b|bandeja\b|saco\b|tarro\b|lata\b|pack\b)\b/i;
-
-  // Números que parecen precios chilenos
-  const PRICE_RX = /^\$?(\d{1,3}(?:[.,]\d{3})+|\d{4,7})([.,]\d{1,2})?$/;
-  const QTY_RX   = /^(\d{1,3})([.,]\d{1,3})?$/;
-
-  /* ── 3. DETECTAR ZONA DE PRODUCTOS ── */
-  let headerLineIdx = -1;
-  let descColPos    = 0;
-  let qtyColPos     = -1;
-  let priceColPos   = -1;
-  let codeColExists = false;
-
-  for(let i=0; i<allLines.length; i++){
-    const line = allLines[i];
-    const low  = line.toLowerCase();
-    if(HEADER_DESC_RX.test(low)){
-      headerLineIdx = i;
-      descColPos  = Math.max(0, low.search(HEADER_DESC_RX));
-      qtyColPos   = low.search(HEADER_QTY_RX);
-      priceColPos = low.search(HEADER_PRICE_RX);
-      // Detectar si hay columna de código al inicio (típico en Bredenmaster, ICB)
-      codeColExists = /^(cod[ií]?g?\w*)\s/i.test(low.trim());
-      break;
+function findBest(query){
+  // Busca en catálogo: nombre + aliases. Devuelve [{prod, score, matchedAlias}]
+  const results=[];
+  for(const p of CAT){
+    const candidates=[p.nombre, ...(p.aliases||[])];
+    let best=0, bestAlias='';
+    for(const c of candidates){
+      const s=matchScore(c, query);
+      if(s>best){best=s;bestAlias=c;}
     }
+    if(best>=70) results.push({prod:p, score:best, alias:bestAlias});
   }
-
-  /* ── 4. RANGO DE LÍNEAS A PARSEAR ── */
-  const startLine = headerLineIdx >= 0 ? headerLineIdx + 1 : 0;
-  const END_RX = /\b(subtotal\b|sub[\s\-]?total\b|neto\b|iva\b|exento\b|suma\b|gran\s*total\b|cancelado\b|son:\b)/i;
-  let endLine = allLines.length;
-  for(let i=startLine; i<allLines.length; i++){
-    if(END_RX.test(allLines[i]) && !/descrip|articul|item|product/i.test(allLines[i])){
-      endLine = i; break;
-    }
-  }
-  const productLines = allLines.slice(startLine, endLine);
-
-  /* ── 5. TOKENIZADOR ── */
-  function tokenize(line){
-    const tokens=[];let m;const rx=/\S+/g;
-    while((m=rx.exec(line))!==null) tokens.push({text:m[0],pos:m.index});
-    return tokens;
-  }
-  function parseNum(s){ return parseFloat(s.replace(/\$/g,'').replace(/\./g,'').replace(',','.')); }
-  function isPrice(s){ return PRICE_RX.test(s.replace(/\s/g,'')); }
-  function isQty(s)  { return QTY_RX.test(s.replace(/\s/g,'')); }
-  function isUnit(s) { return UNIT_RX.test(s); }
-  function isNoise(line){ return NOISE_RX.test(line.trim()); }
-  function isGarbage(s){ return /^[_\-=*#+\\\/]{2,}$/.test(s)||/^[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ]{3,}$/.test(s); }
-  function isCode(s){ return /^[0-9A-Z]{6,12}$/.test(s); }
-
-  /* ── 6. LIMPIAR NOMBRE ── */
-  function cleanName(raw){
-    return raw
-      // Quitar códigos internos largos (6+ alfanumérico)
-      .replace(/\b[A-Z0-9]{6,}\b/g,' ')
-      // Quitar especificaciones de pack: "6PFX4", "12x1", "CJ X 8 KG", etc.
-      .replace(/\b\d+pfx\d+\b/gi,' ')
-      .replace(/\b\d+x\d+\s*(lt?|kg|gr?|ml|un|und)?\b/gi,' ')
-      .replace(/\bcj\s*x?\s*\d+\s*\w{0,4}\b/gi,' ')
-      // Quitar marcas de cantidad: "LAT350", "LATA 350CC", "350CC"
-      .replace(/\b(lat-?\d+|lata\s*\d+\s*cc|\d+\s*cc)\b/gi,' ')
-      // Quitar unidades sueltas
-      .replace(/\b(kg|gr?|lt?s?|cc|ml|un|und|pza|piezas?|cj|bol|paq|tarro)\b/gi,' ')
-      // Quitar números sueltos al final (códigos, tallas, pesos)
-      .replace(/\s\d+\s*$/, '')
-      .replace(/\s\d+[a-z]\s/gi,' ')
-      // Quitar símbolos OCR residuales
-      .replace(/[_=*#+\\]{1,}/g,' ')
-      .replace(/\s{2,}/g,' ')
-      .trim();
-  }
-
-  /* ── 7. PARSEAR LÍNEAS ── */
-  const items = [];
-
-  for(const rawLine of productLines){
-    const line = rawLine.trim();
-    if(!line || line.length < 3) continue;
-    if(isNoise(line)) continue;
-    if(isGarbage(line)) continue;
-    if(/^\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(line)) continue;
-    if(/^[\d\s.,]+$/.test(line) && line.replace(/[\s.,]/g,'').length > 5) continue;
-    // Saltar líneas que son solo el código interno (sin texto de producto)
-    if(/^[0-9A-Z]{6,12}\s*$/.test(line)) continue;
-
-    const tokens = tokenize(line);
-    if(!tokens.length) continue;
-
-    /* Separar tokens */
-    const numTokens  = tokens.filter(t => isPrice(t.text) || isQty(t.text));
-    const textTokens = tokens.filter(t => !isPrice(t.text) && /[a-zA-ZáéíóúñÁÉÍÓÚÑ]/.test(t.text) && !isUnit(t.text));
-
-    if(!textTokens.length) continue;
-
-    /* ── Filtrar tokens de código al inicio ── */
-    // Si el primer token es un código interno, saltar
-    let nameTokens = textTokens.filter(t => !isCode(t.text));
-    if(!nameTokens.length) nameTokens = textTokens;
-
-    /* ── Construir nombre usando posición de columna ── */
-    if(descColPos >= 0 && nameTokens.length > 1){
-      const rightBound = priceColPos > 0 ? priceColPos : 9999;
-      const inDesc = nameTokens.filter(t => t.pos >= descColPos && t.pos < rightBound);
-      if(inDesc.length) nameTokens = inDesc;
-    }
-
-    let rawNombre = nameTokens.map(t=>t.text).join(' ');
-    let nombre = cleanName(rawNombre);
-
-    if(nombre.length < 3) continue;
-    if(/^\d+$/.test(nombre)) continue;
-    // Ignorar si el "nombre" es solo una unidad
-    if(isUnit(nombre.trim())) continue;
-
-    /* ── Extraer cantidad ── */
-    let qty = 1;
-    // 1. Buscar el primer número pequeño del inicio de línea (patrón más común en facturas CL)
-    const firstTok = tokens[0];
-    if(isQty(firstTok.text) && !isPrice(firstTok.text) && isCode(tokens[1]?.text || '')){
-      // Patrón: CANT CODIGO DESCRIPCION (Bredenmaster, ICB)
-      qty = Math.round(parseNum(firstTok.text));
-    } else if(isQty(firstTok.text) && !isPrice(firstTok.text)){
-      const n = parseNum(firstTok.text);
-      if(n >= 1 && n <= 999 && !isCode(firstTok.text)) qty = Math.round(n);
-    }
-    // 2. Buscar patrón "Cantidad" en el nombre
-    const qm = nombre.match(/^(\d{1,3})\s+(.{3,})/);
-    if(qm){ const c=parseNum(qm[1]); if(c>=1&&c<=999){qty=Math.round(c);nombre=qm[2].trim();} }
-
-    /* ── Extraer precio ── */
-    let pu = 0;
-    const priceNums = numTokens
-      .filter(t => isPrice(t.text))
-      .map(t => parseNum(t.text))
-      .filter(n => n >= 100 && n <= 9_999_999);
-
-    if(priceNums.length){
-      priceNums.sort((a,b)=>a-b);
-      if(priceNums.length === 1){
-        pu = priceNums[0];
-        // Si qty>1 y parece total, dividir
-        if(qty>1){
-          const candidate = Math.round(pu/qty);
-          // Solo dividir si da precio razonable (>100)
-          if(candidate >= 100) pu = candidate;
-        }
-      } else {
-        const min=priceNums[0], max=priceNums[priceNums.length-1];
-        // Heurística: si max ≈ min*qty → min es precio unitario
-        if(qty>1 && Math.abs(max - min*qty) < max*0.08){
-          pu = min;
-        } else {
-          // El penúltimo suele ser precio unitario (el último es total línea)
-          pu = priceNums.length>=2 ? priceNums[priceNums.length-2] : min;
-        }
-      }
-    }
-    if(pu === 0) continue;
-
-    /* ── Limpiar nombre final ── */
-    nombre = nombre
-      .replace(/^\W+|\W+$/g,'')
-      .replace(/\s{2,}/g,' ')
-      .trim();
-    // Capitalizar
-    nombre = nombre.split(' ').map(w=>{
-      if(w.length<=2) return w.toUpperCase();
-      return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();
-    }).join(' ');
-
-    if(nombre.length<3) continue;
-
-    /* ── Clasificar ── */
-    const found = lookup(nombre);
-    const sub2  = found?.[2]||'General';
-    items.push({nombre,qty,pu,area:found?.[0]||'Sin clasificar',cat:found?.[1]||'Sin clasificar',sub2,ok:!!found,costs:calcCosts(pu,qty,sub2)});
-  }
-
-  /* ── 8. DEDUPLICAR ── */
-  const seen=new Set();
-  const deduped=items.filter(it=>{
-    const k=it.nombre.toLowerCase().replace(/\s/g,'').slice(0,10);
-    if(seen.has(k))return false;
-    seen.add(k);return true;
-  });
-
-  if(!deduped.length) return parseOCRFallback(rawText);
-  return deduped;
+  return results.sort((a,b)=>b.score-a.score);
 }
 
-/* ════════════════════════════════════════════════════════
-   parseOCRFallback — línea por línea cuando falla la tabla
-   ════════════════════════════════════════════════════════ */
-function parseOCRFallback(text){
-  const SKIP=/^(rut|giro|direcci|fono|tel|email|@|neto|iva|total|subtotal|descuento|boleta|factura|ticket|fecha|hora|caja|vendedor|gracias|vuelto|efectivo|tarjeta|debito|credito|propina|n[°º]\s*\d|cancelado|son:|ciento|doscient|trescient|s\.i\.i|timbre|iaba|condicion|vencimiento)/i;
-  const items=[];
-  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>3);
-  for(const line of lines){
-    if(SKIP.test(line))continue;
-    if(/^\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(line))continue;
-    if(/^[-=_]{3,}/.test(line))continue;
-    const priceRx=/\$?\s*(\d{1,3}(?:[.,]\d{3})+|\d{4,7})(?:[.,]\d{1,2})?/g;
-    const prices=[];let m;
-    while((m=priceRx.exec(line))!==null){const n=parseInt(m[1].replace(/[.,]/g,''));if(n>=200&&n<=9999999)prices.push(n);}
-    if(!prices.length)continue;
-    const pu=prices[prices.length-1];
-    let nombre=line
-      .replace(/\$?\s*\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?\s*/g,' ')
-      .replace(/\d+\s*(kg|gr?|lt?|cc|un|und|cj)/gi,' ')
-      .replace(/[_=*#+|\\]{2,}/g,' ')
-      .replace(/\s+/g,' ').trim();
-    if(nombre.length<3||/^\d+$/.test(nombre))continue;
-    let qty=1;
-    const qm=nombre.match(/^(\d+)\s+(.+)/);
-    if(qm&&parseInt(qm[1])<=99){qty=parseInt(qm[1]);nombre=qm[2];}
-    nombre=nombre.replace(/^\W+|\W+$/g,'').trim();
-    if(nombre.length<3)continue;
-    nombre=nombre.charAt(0).toUpperCase()+nombre.slice(1).toLowerCase();
-    const found=lookup(nombre);const sub2=found?.[2]||'General';
-    items.push({nombre,qty,pu,area:found?.[0]||'Sin clasificar',cat:found?.[1]||'Sin clasificar',sub2,ok:!!found,costs:calcCosts(pu,qty,sub2)});
-  }
-  const seen=new Set();
-  return items.filter(it=>{const k=it.nombre.toLowerCase().slice(0,8);if(seen.has(k))return false;seen.add(k);return true;});
-}
-
-/* ════════════════════════════════
+/* ══════════════════════════════════════
    NAVEGACIÓN
-   ════════════════════════════════ */
-const META={
+══════════════════════════════════════ */
+let prevPage=null;
+const TITLES={
   home:['Resumen','Control de costos'],
-  facturas:['Facturas','Todas las entradas'],
-  nueva:['Nueva factura','Ingresar compra'],
-  pe:['Proyección Financiera','Punto de equilibrio'],
-  impuestos:['Impuestos','Tasas SII Chile']
+  catalogo:['Catálogo de productos','Mis productos registrados'],
+  factura:['Nueva factura','Escanear o ingresar'],
+  analisis:['Análisis de costos','Por familia · Tendencia'],
+  proyeccion:['Proyección financiera','Punto de equilibrio · Ticket'],
 };
 function go(page,btn){
   prevPage=null;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.bnav').forEach(b=>b.classList.remove('on'));
   document.getElementById('pg-'+page).classList.add('on');
-  if(btn)btn.classList.add('on');
+  if(btn) btn.classList.add('on');
   document.getElementById('scroll').scrollTop=0;
-  const[t,s]=META[page]||['',''];
+  const[t,s]=TITLES[page];
   document.getElementById('tb-title').textContent=t;
   document.getElementById('tb-sub').textContent=s;
   document.getElementById('back-btn').style.display='none';
   document.getElementById('tb-act').style.display='none';
-  if(page==='home')renderHome();
-  else if(page==='facturas')renderFacturas();
-  else if(page==='nueva'){step='choose';manItems=[];scanItems=[];fProv='';fFecha=todayStr();renderNueva();}
-  else if(page==='pe')renderPE();
-  else if(page==='impuestos')renderImpuestos();
+  if(page==='home')       renderHome();
+  else if(page==='catalogo')   renderCatalogo();
+  else if(page==='factura')    renderFactura();
+  else if(page==='analisis')   renderAnalisis();
+  else if(page==='proyeccion') renderProy();
 }
-function showBack(from){prevPage=from;document.getElementById('back-btn').style.display='flex';}
-function goBack(){if(prevPage){const idx=['home','facturas','nueva','pe','impuestos'].indexOf(prevPage);go(prevPage,document.querySelectorAll('.bnav')[idx]);prevPage=null;}}
+function goBack(){
+  if(!prevPage) return;
+  const idx=['home','catalogo','factura','analisis','proyeccion'].indexOf(prevPage);
+  go(prevPage, document.querySelectorAll('.bnav')[idx]);
+  prevPage=null;
+}
+function openModal(html){ document.getElementById('modal-body').innerHTML=html; document.getElementById('ov').style.display='flex'; }
+function closeModal(e){ if(e&&e.target!==document.getElementById('ov'))return; document.getElementById('ov').style.display='none'; }
+function closeM(){ document.getElementById('ov').style.display='none'; }
 
-/* ════════════════════════════════
+/* ══════════════════════════════════════
    HOME
-   ════════════════════════════════ */
+══════════════════════════════════════ */
 function renderHome(){
-  const total=DB.reduce((s,f)=>s+f.totalConImp,0);
-  const neto=DB.reduce((s,f)=>s+f.totalNeto,0);
-  const impTot=total-neto;
-  const now=new Date();
-  const week=DB.filter(f=>(now-new Date(f.fecha))<7*864e5).reduce((s,f)=>s+f.totalConImp,0);
-  const mes=DB.filter(f=>{const d=new Date(f.fecha);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).reduce((s,f)=>s+f.totalConImp,0);
-  const catT={};
-  DB.forEach(f=>f.items.forEach(it=>{const c=it.cat||'Sin cat';catT[c]=(catT[c]||0)+it.costs.total;}));
-  const top=Object.entries(catT).sort((a,b)=>b[1]-a[1]).slice(0,4);
-  const max=top[0]?.[1]||1;
-
-  // Calcular ratio costo/venta si hay venta configurada
-  const ventaM=PE.ventaMensual||0;
-  const pctCosto=ventaM>0?Math.min(Math.round(mes/ventaM*100),999):null;
-  const pctOk=pctCosto!==null&&pctCosto<=(100-PE.margenBruto);
+  const m=curM();
+  const fMes=FAC.filter(f=>f.fecha.startsWith(m));
+  const tMes=fMes.reduce((s,f)=>s+f.totalConImp,0);
+  const nMes=fMes.reduce((s,f)=>s+f.totalNeto,0);
+  const iMes=tMes-nMes;
+  // Mes anterior
+  const prev=new Date(); prev.setMonth(prev.getMonth()-1);
+  const pm=prev.toISOString().slice(0,7);
+  const tAnt=FAC.filter(f=>f.fecha.startsWith(pm)).reduce((s,f)=>s+f.totalConImp,0);
+  const vari=tAnt>0?Math.round((tMes-tAnt)/tAnt*100):null;
+  // Por familia este mes
+  const byArea={};
+  fMes.forEach(f=>f.items.forEach(it=>{const a=it.area||'?';byArea[a]=(byArea[a]||0)+it.totalConImp;}));
+  const topA=Object.entries(byArea).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxA=topA[0]?.[1]||1;
+  // CF configurados
+  const cf=CFG.costosF||[];
+  const totalCF=cf.reduce((s,c)=>s+c.monto,0);
+  // PE rápido
+  const peM=totalCF>0?Math.round(totalCF/(CFG.margen/100)):0;
+  const pctPE=peM>0?Math.min(Math.round(tMes/peM*100),999):null;
 
   document.getElementById('pg-home').innerHTML=`
-    ${ventaM>0&&pctCosto!==null?`
-    <div class="${pctOk?'ok-box':'warn-box'}" style="align-items:center">
-      <i class="ti ti-${pctOk?'check':'alert-triangle'}" style="font-size:16px;flex-shrink:0"></i>
-      <span>Costo del mes: <b>${pctCosto}%</b> de las ventas
-      ${pctOk?'· dentro del objetivo':'· supera el margen objetivo de '+(100-PE.margenBruto)+'%'}
-      </span>
+    ${CAT.length===0?`<div class="ibox orange"><i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0"></i>
+      <span>Empieza creando tu <b>catálogo de productos</b> — ve a la pestaña Catálogo.</span></div>`:''}
+
+    <div class="grid2">
+      <div class="met">
+        <div class="met-l">Costo del mes</div>
+        <div class="met-v">${fmt(tMes)}</div>
+        <div class="met-s">${vari!==null?(vari>0?'▲':'▼')+Math.abs(vari)+'% vs. mes ant.':'Sin comparación aún'}</div>
+      </div>
+      <div class="met">
+        <div class="met-l">Impuestos</div>
+        <div class="met-v" style="color:var(--r)">${fmt(iMes)}</div>
+        <div class="met-s">Neto: ${fmt(nMes)}</div>
+      </div>
+    </div>
+    ${peM>0?`
+    <div class="met" style="margin-bottom:10px">
+      <div class="met-l">Avance vs. punto de equilibrio</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+        <div style="flex:1;height:10px;background:var(--border2);border-radius:5px;overflow:hidden">
+          <div style="width:${Math.min(100,pctPE||0)}%;height:100%;background:${(pctPE||0)<60?'var(--g)':(pctPE||0)<90?'var(--a)':'var(--r)'};border-radius:5px;transition:width .5s"></div>
+        </div>
+        <span style="font-size:13px;font-weight:700;color:${(pctPE||0)<60?'var(--g)':(pctPE||0)<90?'var(--a)':'var(--r)'}">${pctPE||0}%</span>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px">Costo acumulado ${fmt(tMes)} de ${fmt(peM)} presupuestado</div>
     </div>`:''}
-    <div class="met-row">
-      <div class="met"><div class="met-l">Gasto total</div><div class="met-v">${fmt(total)}</div><div class="met-s">Neto: ${fmt(neto)}</div></div>
-      <div class="met"><div class="met-l">Este mes</div><div class="met-v">${fmt(mes)}</div></div>
-    </div>
-    <div class="met-row">
-      <div class="met"><div class="met-l">Facturas</div><div class="met-v">${DB.length}</div></div>
-      <div class="met"><div class="met-l">Impuestos</div><div class="met-v" style="color:var(--r)">${fmt(impTot)}</div></div>
-    </div>
-    <button class="fab" onclick="go('nueva',document.querySelectorAll('.bnav')[2])"><i class="ti ti-plus"></i>Ingresar nueva factura</button>
-    <div class="slbl">Top categorías</div>
+
+    <button class="btn-p" onclick="go('factura',document.querySelectorAll('.bnav')[2])">
+      <i class="ti ti-scan"></i>Ingresar nueva factura
+    </button>
+
+    ${topA.length?`
+    <div class="slbl">Gasto por familia este mes</div>
     <div class="card cp">
-      ${top.length?top.map(([c,v])=>`<div class="bar-row"><div class="bar-lbl">${c}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/max*100)}%"></div></div><div class="bar-val">${fmt(v)}</div></div>`).join('')
-        :'<div style="text-align:center;padding:20px;font-size:13px;color:#999">Sin datos — ingresa tu primera factura</div>'}
-    </div>
+      ${topA.map(([a,v])=>`
+        <div class="bar-row">
+          <div class="bar-lbl">${a}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxA*100)}%;background:${aColor(a)}"></div></div>
+          <div class="bar-val">${fmt(v)}</div>
+        </div>`).join('')}
+    </div>`:''}
+
     <div class="slbl">Últimas facturas</div>
     <div class="card">
-      ${DB.length?DB.slice(-5).reverse().map((f,i)=>`
-        <div class="row" onclick="verFactura(${DB.length-1-i},'home')" style="cursor:pointer">
+      ${FAC.length?FAC.slice().reverse().slice(0,6).map((f,ri)=>{
+        const i=FAC.length-1-ri;
+        return`<div class="row" onclick="verFac(${i})" style="cursor:pointer">
           <div style="width:8px;height:8px;border-radius:50%;background:var(--g);flex-shrink:0"></div>
-          <div class="row-info"><div class="row-t">${f.prov}</div><div class="row-s">${f.fecha} · ${f.items.length} productos</div></div>
+          <div class="row-info">
+            <div class="row-t">${f.prov}</div>
+            <div class="row-s">${f.fecha} · ${f.items.length} ítem${f.items.length>1?'s':''} · <span class="badge ${f.src==='ocr'?'bg':'bb'}">${f.src==='ocr'?'OCR':'Manual'}</span></div>
+          </div>
           <div class="row-r"><div class="row-amt">${fmt(f.totalConImp)}</div></div>
           <i class="ti ti-chevron-right chev"></i>
-        </div>`).join(''):'<div style="text-align:center;padding:24px;font-size:13px;color:#999">Sin facturas aún</div>'}
+        </div>`;}).join('')
+      :`<div class="empty" style="padding:24px"><i class="ti ti-file-invoice" style="font-size:36px"></i><div class="empty-s">Sin facturas aún</div></div>`}
     </div>`;
 }
 
-/* ════════════════════════════════
-   FACTURAS
-   ════════════════════════════════ */
-function renderFacturas(){
-  const el=document.getElementById('pg-facturas');
-  if(!DB.length){el.innerHTML=`<div class="empty"><i class="ti ti-file-invoice"></i><p>No hay facturas aún</p><button class="fab" onclick="go('nueva',document.querySelectorAll('.bnav')[2])"><i class="ti ti-plus"></i>Ingresar primera</button></div>`;return;}
-  el.innerHTML=`<div class="card">${DB.slice().reverse().map((f,ri)=>{const i=DB.length-1-ri;return`
-    <div class="row" onclick="verFactura(${i},'facturas')" style="cursor:pointer">
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--g);flex-shrink:0"></div>
-      <div class="row-info"><div class="row-t">${f.prov}</div>
-      <div class="row-s">${f.fecha} · ${f.items.length} ítems · <span class="badge ${f.src==='scan'?'bg':'bb'}">${f.src==='scan'?'Escaneado':'Manual'}</span></div></div>
-      <div class="row-r"><div class="row-amt">${fmt(f.totalConImp)}</div>${f.totalConImp>f.totalNeto?`<div style="font-size:11px;color:var(--r)">+${fmt(f.totalConImp-f.totalNeto)} imp.</div>`:''}</div>
-      <i class="ti ti-chevron-right chev"></i>
-    </div>`;}).join('')}</div>`;
-}
-function verFactura(i,from){
-  const f=DB[i];showBack(from);
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-  document.getElementById('pg-facturas').classList.add('on');
-  document.getElementById('tb-title').textContent=f.prov;
-  document.getElementById('tb-sub').textContent=f.fecha;
+/* ══════════════════════════════════════
+   CATÁLOGO
+══════════════════════════════════════ */
+let catQ='';
+function renderCatalogo(){
   const tbact=document.getElementById('tb-act');
-  tbact.style.display='block';tbact.textContent='Eliminar';tbact.style.color='var(--r)';
-  tbact.onclick=()=>{if(confirm('¿Eliminar esta factura?')){DB.splice(i,1);saveDB();goBack();}};
-  document.getElementById('scroll').scrollTop=0;
-  document.getElementById('pg-facturas').innerHTML=`
-    <div class="card">
-      ${f.items.map(it=>{const c=it.costs;const hasAd=c.adAmt>0;return`
-        <div class="res-item">
-          <div class="res-name">${it.nombre}</div>
-          <div class="res-path">${it.area} → ${it.cat} → ${it.sub2}</div>
-          ${hasAd?`<span class="tax-pill">+${fmtP(c.tax.ad)} ${c.tax.tipo}</span>`:`<span class="tax-pill none">IVA 19%</span>`}
-          <div class="res-bottom">
-            <div style="font-size:12px;color:#999">${it.qty} × ${fmt(it.pu)} neto</div>
-            <div style="text-align:right"><div class="res-price">${fmt(c.total)}</div>
-            ${hasAd?`<div style="font-size:11px;color:#999">Neto: ${fmt(c.neto)}</div>`:''}</div>
-          </div>
-        </div>`}).join('')}
-      <div class="total-row">
-        <div><div class="total-lbl">Total c/impuestos</div>
-        ${f.totalConImp>f.totalNeto?`<div style="font-size:11px;color:#999">Neto: ${fmt(f.totalNeto)} · Imp: ${fmt(f.totalConImp-f.totalNeto)}</div>`:''}
-        </div><div class="total-v">${fmt(f.totalConImp)}</div>
+  tbact.style.display='block'; tbact.textContent='+ Nuevo'; tbact.onclick=()=>modalProd(null);
+
+  const filtered=CAT.filter(p=>{
+    if(!catQ) return true;
+    const q=catQ.toLowerCase();
+    return p.nombre.toLowerCase().includes(q)||(p.categoria||'').toLowerCase().includes(q)
+      ||(p.area||'').toLowerCase().includes(q)||(p.aliases||[]).some(a=>a.toLowerCase().includes(q));
+  });
+
+  if(!CAT.length){
+    document.getElementById('pg-catalogo').innerHTML=`
+      <div class="ibox blue"><i class="ti ti-bulb" style="font-size:16px;flex-shrink:0"></i>
+      <span>Agrega cada producto que compras con el <b>nombre exacto como aparece en la factura</b> como alias. El OCR lo reconocerá automáticamente.</span></div>
+      <div class="empty">
+        <i class="ti ti-books"></i>
+        <div class="empty-t">Catálogo vacío</div>
+        <div class="empty-s">Registra tus productos una sola vez con nombre, área, categoría, impuesto y los nombres que aparecen en las facturas.</div>
+        <button class="btn-p" style="max-width:240px;margin:0 auto" onclick="modalProd(null)">
+          <i class="ti ti-plus"></i>Crear primer producto
+        </button>
+      </div>`;
+    return;
+  }
+
+  const byArea={};
+  filtered.forEach(p=>{const a=p.area||'Sin área';(byArea[a]=byArea[a]||[]).push(p);});
+
+  document.getElementById('pg-catalogo').innerHTML=`
+    <div class="srap">
+      <i class="ti ti-search"></i>
+      <input class="sinp" placeholder="Buscar producto, alias, categoría..." value="${catQ}"
+        oninput="catQ=this.value;renderCatalogo()">
+    </div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:10px">${CAT.length} productos · ${CAT.reduce((s,p)=>s+(p.aliases||[]).length,0)} aliases</div>
+    ${Object.entries(byArea).sort().map(([area,prods])=>`
+      <div class="slbl" style="display:flex;align-items:center;gap:6px">
+        <i class="ti ${aIcon(area)}" style="color:${aColor(area)};font-size:14px"></i>${area}
       </div>
-    </div>`;
+      <div class="card">
+        ${prods.map(p=>`
+          <div class="citem" onclick="modalProd('${p.id}')">
+            <div class="cicon" style="background:${aColor(p.area)}22">
+              <i class="ti ${aIcon(p.area)}" style="color:${aColor(p.area)}"></i>
+            </div>
+            <div class="cinfo">
+              <div class="cname">${p.nombre}</div>
+              <div class="cpath">${p.categoria||''}${p.sub?' · '+p.sub:''} · ${IMP[p.imp]?.n||'IVA'}</div>
+              ${p.aliases?.length?`<div class="calias">📄 ${p.aliases.join(' · ')}</div>`:'<div class="calias" style="color:var(--a)">⚠ Sin aliases — el OCR no lo reconocerá</div>'}
+            </div>
+            <i class="ti ti-chevron-right chev"></i>
+          </div>`).join('')}
+      </div>`).join('')}`;
 }
 
-/* ════════════════════════════════
-   NUEVA FACTURA
-   ════════════════════════════════ */
-function renderNueva(){
-  document.getElementById('tb-title').textContent='Nueva factura';
-  document.getElementById('tb-sub').textContent='Ingresar compra';
-  const el=document.getElementById('pg-nueva');
-  if(step==='choose'){
-    el.innerHTML=`
-      <div class="ff"><label>Proveedor *</label><input id="np" placeholder="Ej: Norte Limpio, ICB, Bombo..." value="${fProv}" oninput="fProv=this.value"></div>
-      <div class="ff"><label>Fecha *</label><input type="date" id="nf" value="${fFecha}" oninput="fFecha=this.value"></div>
-      <div class="slbl">¿Cómo ingresas los productos?</div>
-      <button class="btn-scan" onclick="doScan('cam')">
-        <i class="ti ti-camera"></i>
-        <div><div style="font-weight:600">Fotografiar factura</div>
-        <div style="font-size:12px">El OCR lee los productos automáticamente</div></div>
-      </button>
-      <button class="btn-out" onclick="doScan('gal')">
-        <i class="ti ti-photo"></i>
-        <div><div style="font-weight:500">Subir imagen</div>
-        <div style="font-size:12px;color:#888">Desde la galería del dispositivo</div></div>
-      </button>
-      <button class="btn-out" onclick="startMan()">
-        <i class="ti ti-pencil"></i>
-        <div><div style="font-weight:500">Ingresar manualmente</div>
-        <div style="font-size:12px;color:#888">Producto por producto</div></div>
-      </button>
-      <div class="info-box" style="margin-top:8px"><i class="ti ti-bulb" style="font-size:16px;flex-shrink:0"></i>
-      <span>OCR optimizado para facturas de <b>Norte Limpio, ICB Food Service, Bombo SPA, Bredenmaster</b> y proveedores chilenos en general.</span></div>`;
-  } else if(step==='scanning'){
-    el.innerHTML=`
-      <div class="ocr-box">
-        <i class="ti ti-scan ocr-icon"></i>
-        <div class="ocr-msg">Leyendo factura...</div>
-        <div class="ocr-sub">Detectando tabla de productos</div>
-        <div class="ocr-bar-track"><div class="ocr-bar-fill" id="ocr-bar" style="width:0%"></div></div>
-        <div class="ocr-pct" id="ocr-pct">0%</div>
-      </div>
-      <div class="info-box"><i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0"></i>
-      <span>Mejor resultado: buena iluminación, factura bien plana, sin sombras. Tarda 10-20 seg.</span></div>`;
-  } else if(step==='scan-preview'){
-    const uncat=scanItems.filter(it=>!it.ok).length;
-    const total=scanItems.reduce((s,it)=>s+it.costs.total,0);
-    const neto=scanItems.reduce((s,it)=>s+it.costs.neto,0);
-    el.innerHTML=`
-      ${uncat?`<div class="warn-box"><i class="ti ti-alert-triangle" style="flex-shrink:0"></i>Revisa los ${uncat} productos sin clasificar.</div>`
-        :`<div class="ok-box"><i class="ti ti-check" style="flex-shrink:0;font-size:16px"></i>${scanItems.length} productos detectados y clasificados.</div>`}
-      <div class="card" style="margin-bottom:10px" id="scan-list">
-        ${renderScanItems()}
-        <div class="total-row">
-          <div><div class="total-lbl">Total c/impuestos</div>
-          <div style="font-size:11px;color:#999">Neto: ${fmt(neto)} · Imp: ${fmt(total-neto)}</div></div>
-          <div class="total-v">${fmt(total)}</div>
-        </div>
-      </div>
-      <button class="fab" onclick="guardarScan()"><i class="ti ti-check"></i>Guardar factura</button>
-      <button class="btn-out" style="justify-content:center" onclick="step='choose';renderNueva()"><i class="ti ti-arrow-left"></i>Volver y escanear de nuevo</button>`;
-  } else if(step==='manual'){
-    const tot=manItems.reduce((s,it)=>s+it.costs.total,0);
-    const neto=manItems.reduce((s,it)=>s+it.costs.neto,0);
-    el.innerHTML=`
-      <div class="card cp" style="margin-bottom:10px">
-        <div class="ff" style="margin-bottom:8px"><label>Nombre del producto</label>
-          <input id="mn" placeholder="Ej: Tomate cherry, Vacuno, Cerveza..." oninput="hintCat()"></div>
-        <div id="cat-hint" class="hint" style="color:var(--g)"></div>
-        <div id="tax-hint" class="hint" style="color:var(--r);margin-top:-8px"></div>
-        <div class="g2" style="margin-bottom:10px">
-          <div class="ff" style="margin:0"><label>Cantidad</label><input id="mq" type="number" placeholder="1" min="0.01" step="0.01"></div>
-          <div class="ff" style="margin:0"><label>Precio neto</label><input id="mp" type="number" placeholder="0" oninput="hintCat()"></div>
-        </div>
-        <button class="fab" style="margin:0;height:44px;font-size:14px" onclick="addMan()"><i class="ti ti-plus"></i>Agregar</button>
-      </div>
-      ${manItems.length?`
-        <div class="slbl">Productos (${manItems.length})</div>
-        <div class="card cp" style="margin-bottom:10px">
-          ${manItems.map((it,i)=>{const hasAd=it.costs.adAmt>0;return`
-            <div class="chip"><div>
-              <div style="font-weight:500">${it.nombre}</div>
-              <div style="font-size:11px;color:#888">${it.cat}${hasAd?` · <span style="color:var(--r)">+${fmtP(it.costs.tax.ad)}</span>`:''} · ${fmt(it.costs.total)}</div>
-            </div><button class="chip-del" onclick="delMan(${i})"><i class="ti ti-x"></i></button></div>`}).join('')}
-          <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:0.5px solid #f0f0f0;font-size:13px">
-            <span style="color:#666">Total c/imp · Neto: ${fmt(neto)}</span>
-            <span style="font-weight:500">${fmt(tot)}</span>
-          </div>
-        </div>
-        <button class="fab" onclick="guardarMan()"><i class="ti ti-check"></i>Guardar factura</button>`:''}`;
-  } else if(step==='ocr-debug'){
-    const raw=(window._ocrDebugText||'').slice(0,1200);
-    el.innerHTML=`
-      <div class="warn-box"><i class="ti ti-alert-triangle" style="flex-shrink:0"></i>
-        <div><b>No se detectaron productos.</b><br>Revisa el texto OCR abajo. Si hay mala calidad, intenta con mejor iluminación.</div>
-      </div>
-      <div class="slbl">Texto detectado</div>
-      <div class="card cp"><pre style="font-size:11px;color:#666;white-space:pre-wrap;line-height:1.6;max-height:280px;overflow-y:auto">${raw.replace(/</g,'&lt;')}</pre></div>
-      <button class="btn-scan" onclick="step='choose';renderNueva()"><i class="ti ti-camera"></i>Intentar de nuevo</button>
-      <button class="btn-out" onclick="step='manual';renderNueva()"><i class="ti ti-pencil"></i>Ingresar manualmente</button>`;
-  } else if(step==='ok'){
-    el.innerHTML=`<div class="empty">
-      <i class="ti ti-circle-check" style="color:var(--g)"></i>
-      <p style="font-weight:600;font-size:16px;color:var(--t1)">Factura guardada</p>
-      <p>Costos e impuestos registrados.</p>
-      <button class="fab" style="margin-top:16px" onclick="go('home',document.querySelectorAll('.bnav')[0])"><i class="ti ti-home"></i>Ver resumen</button>
-      <button class="btn-out" style="justify-content:center" onclick="step='choose';manItems=[];scanItems=[];renderNueva()"><i class="ti ti-plus"></i>Ingresar otra</button>
-    </div>`;
-  }
+let _tmpAl=[], _editId=null;
+function modalProd(id){
+  _editId=id; const p=id?CAT.find(x=>x.id===id):null;
+  _tmpAl=p?[...(p.aliases||[])]:[];
+  openModal(`
+    <div class="mtitle">${p?'Editar producto':'Nuevo producto'}</div>
+    <div class="ff"><label>Nombre del producto *</label>
+      <input id="p-n" placeholder="Ej: Pechuga de pollo" value="${p?p.nombre:''}"></div>
+    <div class="grid2">
+      <div class="ff"><label>Área *</label>
+        <select id="p-a">${['Cocina caliente','Pastelería','Barra','Bodega general','Desayuno','Limpieza','Desechables'].map(a=>`<option${p?.area===a?' selected':''}>${a}</option>`).join('')}</select></div>
+      <div class="ff"><label>Categoría</label>
+        <input id="p-c" placeholder="Ej: Proteínas" value="${p?p.categoria||'':''}"></div>
+    </div>
+    <div class="ff"><label>Subcategoría</label>
+      <input id="p-s" placeholder="Ej: Pollo" value="${p?p.sub||'':''}"></div>
+    <div class="ff"><label>Impuesto SII</label>
+      <select id="p-i">${Object.entries(IMP).map(([k,v])=>`<option value="${k}"${p?.imp===k?' selected':''}>${v.n} (${fmtP(v.iva+v.ad)})</option>`).join('')}</select></div>
+    <div class="ff">
+      <label>Nombres en factura (aliases) *</label>
+      <div class="ibox blue" style="margin-bottom:8px"><i class="ti ti-scan" style="font-size:14px;flex-shrink:0"></i>
+        <span>El OCR busca estos nombres exactamente. Agrega el texto tal como aparece en la factura, ej: <b>"KEY HIGIENIZANTE 1X5L"</b>, <b>"FILETE DE REINETA CJ 8 KG"</b></span></div>
+      <input id="p-al" placeholder="Escribe y presiona Enter..." onkeydown="alKey(event)">
+      <div id="p-al-chips" style="margin-top:7px"></div>
+    </div>
+    <button class="btn-p" onclick="saveProd()"><i class="ti ti-check"></i>${p?'Guardar cambios':'Crear producto'}</button>
+    ${p?`<button onclick="delProd('${id}')" style="width:100%;padding:12px;border:1px solid var(--r);background:var(--rl);color:var(--r);border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+      <i class="ti ti-trash" style="vertical-align:-2px"></i> Eliminar</button>`:''}
+  `);
+  renderAlChips();
 }
-function renderScanItems(){
-  return scanItems.map((it,i)=>{const c=it.costs;const hasAd=c.adAmt>0;return`
-    <div class="edit-item">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div style="flex:1">
-          <input class="edit-inp" value="${it.nombre}" placeholder="Nombre" style="font-weight:500;margin-bottom:4px" onchange="updateScan(${i},'nombre',this.value)">
-          <div style="font-size:11px;color:#999;margin-bottom:4px">${it.area} → ${it.cat} → ${it.sub2}</div>
-          ${hasAd?`<span class="tax-pill">+${fmtP(c.tax.ad)} ${c.tax.tipo}</span>`:`<span class="tax-pill none">IVA 19%</span>`}
-        </div>
-        <button onclick="delScan(${i})" style="border:none;background:none;color:var(--t4);cursor:pointer;font-size:18px;flex-shrink:0"><i class="ti ti-x"></i></button>
-      </div>
-      <div class="edit-row">
-        <input class="edit-inp" type="number" value="${it.qty}" placeholder="Qty" style="max-width:70px" onchange="updateScan(${i},'qty',this.value)">
-        <span style="font-size:12px;color:#999;align-self:center">×</span>
-        <input class="edit-inp" type="number" value="${it.pu}" placeholder="Precio neto" onchange="updateScan(${i},'pu',this.value)">
-        <div style="font-weight:600;font-size:14px;align-self:center;flex-shrink:0">${fmt(c.total)}</div>
-      </div>
-      ${!it.ok?`<select style="font-size:12px;padding:6px 8px;border-radius:7px;border:0.5px solid var(--border);background:#fff;font-family:inherit;margin-top:6px;width:100%" onchange="reclasificar(${i},this.value)">
-        <option value="">Asignar categoría...</option>
-        <option>Proteínas</option><option>Verduras</option><option>Frutas</option><option>Lácteos</option>
-        <option>Panadería</option><option>Pastelería</option><option>Abarrotes</option><option>Bebidas</option><option>Desechables</option><option>Limpieza</option>
-      </select>`:''}
-    </div>`}).join('');
+function alKey(e){
+  if(e.key!=='Enter'&&e.key!==',')return; e.preventDefault();
+  const v=e.target.value.trim();
+  if(v&&!_tmpAl.includes(v)){_tmpAl.push(v);renderAlChips();e.target.value='';}
 }
-function updateScan(i,field,val){
-  if(field==='qty') scanItems[i].qty=parseFloat(val)||1;
-  else if(field==='pu') scanItems[i].pu=parseFloat(val)||0;
-  else if(field==='nombre'){
-    scanItems[i].nombre=val;
-    const found=lookup(val);
-    if(found){scanItems[i].area=found[0];scanItems[i].cat=found[1];scanItems[i].sub2=found[2];scanItems[i].ok=true;}
-  }
-  scanItems[i].costs=calcCosts(scanItems[i].pu,scanItems[i].qty,scanItems[i].sub2);
-  const list=document.getElementById('scan-list');
-  if(list) list.innerHTML=renderScanItems()+`<div class="total-row">
-    <div><div class="total-lbl">Total c/impuestos</div>
-    <div style="font-size:11px;color:#999">Neto: ${fmt(scanItems.reduce((s,it)=>s+it.costs.neto,0))} · Imp: ${fmt(scanItems.reduce((s,it)=>s+it.costs.adAmt+it.costs.ivaAmt,0))}</div></div>
-    <div class="total-v">${fmt(scanItems.reduce((s,it)=>s+it.costs.total,0))}</div>
-  </div>`;
+function renderAlChips(){
+  const el=document.getElementById('p-al-chips'); if(!el)return;
+  el.innerHTML=_tmpAl.map(a=>`<span class="achip">${a}<button onclick="rmAl('${a.replace(/'/,"\\'")}')">&times;</button></span>`).join('');
 }
-function delScan(i){scanItems.splice(i,1);if(!scanItems.length){step='choose';}renderNueva();}
-function reclasificar(i,cat){
-  if(!cat)return;
-  scanItems[i].cat=cat;scanItems[i].area='Sin clasificar';scanItems[i].sub2=cat;scanItems[i].ok=true;
-  extraCat[scanItems[i].nombre.toLowerCase().trim()]=['Sin clasificar',cat,cat];
-  scanItems[i].costs=calcCosts(scanItems[i].pu,scanItems[i].qty,cat);
-  saveExtra();renderNueva();
+function rmAl(a){_tmpAl=_tmpAl.filter(x=>x!==a);renderAlChips();}
+function saveProd(){
+  const n=document.getElementById('p-n')?.value.trim();
+  if(!n){alert('El nombre es obligatorio');return;}
+  const prod={
+    id:_editId||('p'+Date.now()),
+    nombre:n,
+    area:document.getElementById('p-a')?.value,
+    categoria:document.getElementById('p-c')?.value.trim(),
+    sub:document.getElementById('p-s')?.value.trim(),
+    imp:document.getElementById('p-i')?.value||'iva',
+    aliases:[..._tmpAl],
+  };
+  if(_editId){ const i=CAT.findIndex(x=>x.id===_editId); if(i>=0) CAT[i]=prod; }
+  else CAT.push(prod);
+  sv(); closeM(); renderCatalogo();
+}
+function delProd(id){
+  if(!confirm('¿Eliminar producto del catálogo?'))return;
+  CAT=CAT.filter(p=>p.id!==id); sv(); closeM(); renderCatalogo();
 }
 
-/* ════════════════════════════════
-   OCR con Tesseract
-   ════════════════════════════════ */
-function chkProv(){
-  const p=document.getElementById('np')?.value||fProv;
-  if(!p.trim()){alert('Ingresa el nombre del proveedor primero');return false;}
-  fProv=p;fFecha=document.getElementById('nf')?.value||fFecha;return true;
+/* ══════════════════════════════════════
+   FACTURA — OCR + MANUAL
+══════════════════════════════════════ */
+let fProv='', fFecha=today(), fItems=[], fStep='choose';
+let ocrResults=[];   // resultado crudo del OCR: [{textoOCR, matches:[{prod,score,alias}], elegido, qty, nu}]
+
+function renderFactura(){
+  const el=document.getElementById('pg-factura');
+  if(fStep==='choose')        el.innerHTML=renderFacChoose();
+  else if(fStep==='scanning') el.innerHTML=renderFacScanning();
+  else if(fStep==='review')   el.innerHTML=renderFacReview();
+  else if(fStep==='edit')     el.innerHTML=renderFacEdit();
+  else if(fStep==='ok')       el.innerHTML=renderFacOk();
 }
-function doScan(src){ if(!chkProv())return; document.getElementById(src==='cam'?'file-cam':'file-gal').click(); }
-function startMan(){ if(!chkProv())return; step='manual'; renderNueva(); }
-function onFile(input){
-  const file=input.files[0];if(!file)return;
-  step='scanning';renderNueva();
+
+/* ── Paso 1: elegir modo ── */
+function renderFacChoose(){
+  return`
+    <div class="card cp" style="margin-bottom:10px">
+      <div class="grid2">
+        <div class="ff" style="margin:0"><label>Proveedor *</label>
+          <input id="f-prov" placeholder="Norte Limpio..." value="${fProv}" oninput="fProv=this.value"></div>
+        <div class="ff" style="margin:0"><label>Fecha</label>
+          <input type="date" id="f-fecha" value="${fFecha}" oninput="fFecha=this.value"></div>
+      </div>
+    </div>
+    <div class="slbl">¿Cómo ingresas los productos?</div>
+    ${CAT.length===0?`<div class="ibox orange"><i class="ti ti-alert-triangle" style="flex-shrink:0;font-size:16px"></i>
+      <span>Necesitas productos en el <b>catálogo</b> para que el OCR los reconozca.</span></div>`:''}
+    <button class="btn-scan" onclick="doOCR('cam')">
+      <i class="ti ti-camera"></i>
+      <div><div>Fotografiar factura</div>
+      <div style="font-size:12px;font-weight:400;margin-top:2px">El OCR detecta los productos del catálogo automáticamente</div></div>
+    </button>
+    <button class="btn-o" onclick="doOCR('gal')">
+      <i class="ti ti-photo"></i><div><div style="font-weight:600">Desde galería</div><div style="font-size:12px;color:var(--t3)">Subir imagen guardada</div></div>
+    </button>
+    <button class="btn-o" onclick="goManual()">
+      <i class="ti ti-keyboard"></i><div><div style="font-weight:600">Ingresar manualmente</div><div style="font-size:12px;color:var(--t3)">Buscar y seleccionar del catálogo</div></div>
+    </button>
+    <div class="ibox blue" style="margin-top:4px"><i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0"></i>
+    <span>El OCR buscará en tu catálogo los productos por nombre y alias. Los que no reconozca los podrás asignar manualmente.</span></div>`;
+}
+
+function doOCR(src){
+  if(!fProv.trim()&&!(fProv=document.getElementById('f-prov')?.value.trim())){alert('Ingresa el proveedor primero');return;}
+  fFecha=document.getElementById('f-fecha')?.value||fFecha;
+  document.getElementById('inp-'+src).click();
+}
+function goManual(){
+  if(!fProv.trim()&&!(fProv=document.getElementById('f-prov')?.value.trim())){alert('Ingresa el proveedor primero');return;}
+  fFecha=document.getElementById('f-fecha')?.value||fFecha;
+  fStep='edit'; renderFactura();
+}
+
+/* ── Paso 2: OCR ── */
+function renderFacScanning(){
+  return`
+    <div class="ocr-card">
+      <i class="ti ti-scan ocr-icon"></i>
+      <div class="ocr-msg">Leyendo factura…</div>
+      <div class="ocr-sub">Detectando productos del catálogo</div>
+      <div class="ocr-track"><div class="ocr-fill" id="ocr-fill" style="width:0%"></div></div>
+      <div class="ocr-pct" id="ocr-pct">0%</div>
+    </div>
+    <div class="ibox blue" style="margin-top:10px"><i class="ti ti-bulb" style="font-size:16px;flex-shrink:0"></i>
+    <span>Buena iluminación y factura plana mejoran el resultado. Tarda ~15 segundos.</span></div>`;
+}
+
+function onImg(input){
+  const file=input.files[0]; if(!file)return;
+  fStep='scanning'; renderFactura();
   const url=URL.createObjectURL(file);
   Tesseract.recognize(url,'spa',{
-    logger:m=>{
-      if(m.status==='recognizing text'){
-        const pct=Math.round(m.progress*100);
-        const bar=document.getElementById('ocr-bar');
-        const lbl=document.getElementById('ocr-pct');
-        if(bar)bar.style.width=pct+'%';
-        if(lbl)lbl.textContent=pct+'%';
-      }
-    }
+    logger:m=>{ if(m.status==='recognizing text'){
+      const p=Math.round(m.progress*100);
+      const f=document.getElementById('ocr-fill'), l=document.getElementById('ocr-pct');
+      if(f)f.style.width=p+'%'; if(l)l.textContent=p+'%';
+    }}
   }).then(({data:{text}})=>{
     URL.revokeObjectURL(url);
-    window._lastOCRText=text;
-    scanItems=parseOCRText(text);
-    step=scanItems.length?'scan-preview':'ocr-debug';
-    if(!scanItems.length) window._ocrDebugText=text;
-    renderNueva();
+    ocrResults=parseOCRvsCAT(text);
+    fStep='review'; renderFactura();
   }).catch(()=>{
-    step='choose';renderNueva();
-    alert('Error al leer la imagen. Intenta con mejor iluminación o usa ingreso manual.');
+    fStep='choose'; renderFactura();
+    alert('Error de lectura. Intenta con mejor iluminación o usa ingreso manual.');
   });
   input.value='';
 }
-function guardarScan(){
-  if(!scanItems.length){alert('No hay productos');return;}
-  const neto=scanItems.reduce((s,it)=>s+it.costs.neto,0);
-  const total=scanItems.reduce((s,it)=>s+it.costs.total,0);
-  DB.push({prov:fProv,fecha:fFecha,totalNeto:neto,totalConImp:total,src:'scan',
-    items:scanItems.map(it=>({nombre:it.nombre,qty:it.qty,pu:it.pu,area:it.area,cat:it.cat,sub2:it.sub2,costs:it.costs}))});
-  saveDB();step='ok';renderNueva();
-}
-function hintCat(){
-  const n=document.getElementById('mn')?.value||'';
-  const p=parseFloat(document.getElementById('mp')?.value)||0;
-  const found=lookup(n);
-  const hc=document.getElementById('cat-hint'),ht=document.getElementById('tax-hint');
-  if(!hc||!ht)return;
-  if(found){
-    const tax=getTax(found[2]);
-    hc.innerHTML=`<i class="ti ti-check" style="vertical-align:-2px"></i> ${found[0]} → ${found[1]} → ${found[2]}`;
-    if(tax.ad>0&&p>0) ht.innerHTML=`<i class="ti ti-receipt-tax" style="vertical-align:-2px"></i> +${fmtP(tax.ad)} ${tax.tipo} = ${fmt(Math.round(p*tax.ad/100))} extra/unidad`;
-    else if(tax.ad>0) ht.innerHTML=`<i class="ti ti-receipt-tax" style="vertical-align:-2px"></i> Imp. adicional de ${fmtP(tax.ad)}`;
-    else ht.innerHTML='';
-  }else{
-    hc.innerHTML=n.length>2?'<span style="color:var(--a)">No en catálogo — IVA normal</span>':'';
-    ht.innerHTML='';
+
+/* ── parseOCRvsCAT: extrae líneas de la factura y matchea con catálogo ── */
+function parseOCRvsCAT(rawText){
+  // 1. Separar texto en líneas limpias
+  const SKIP=/^(rut\b|giro\b|direcci|fono|tel[eé]|email|@|www\.|neto\b|iva\b|19\s*%|exento|total\b|descuento|sub[\s-]?total|cancelado|son:|ciento|doscient|trescient|timbre|res\.\s*\d|verifique|s\.i\.i|fecha\s*emis|condicion|vencimiento|iaba|forma\s*de\s*pago|vendedor|ref\b|control|doc\.\s*interno|bultos|peso\s*bruto|n\.p\.g|o\.c\.n)/i;
+  const lines=rawText.split('\n')
+    .map(l=>l.trim())
+    .filter(l=>l.length>4 && !/^\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(l) && !SKIP.test(l) && !/^[\d\s.,]+$/.test(l));
+
+  // 2. Para cada línea, intentar extraer precio y matchear con catálogo
+  const results=[];
+  const PRICE_RX=/\$?(\d{1,3}(?:[.,]\d{3})+|\d{4,7})(?:[.,]\d{0,2})?/g;
+  const QTY_RX=/^(\d{1,3}(?:[.,]\d{1,3})?)\s/;
+
+  for(const line of lines){
+    // Extraer precios
+    const prices=[]; let m;
+    const tmp=line.replace(PRICE_RX, t=>{ const n=parseInt(t.replace(/\$|\./g,'').replace(',','.')); if(n>=100&&n<=9999999)prices.push(n); return ''; });
+    if(!prices.length) continue;
+
+    // Nombre candidato: quitar números grandes y símbolos
+    let name=tmp.replace(/[_=*#+|\\]{2,}/g,' ').replace(/\s+/g,' ').trim();
+    // Quitar código interno al inicio (6+ alfanum)
+    name=name.replace(/^[A-Z0-9]{6,15}\s/,'').replace(/^[0-9]+\s/,'').trim();
+    if(name.length<3) continue;
+
+    // Extraer qty del inicio
+    let qty=1;
+    const qm=name.match(QTY_RX);
+    if(qm){qty=parseFloat(qm[1].replace(',','.'))||1; name=name.slice(qm[0].length).trim();}
+
+    // Precio unitario heurística
+    const pu=prices.length===1?prices[0]:prices[prices.length-2]||prices[0];
+
+    // Matchear contra catálogo
+    const matches=findBest(name);
+    if(!matches.length && CAT.length===0) continue; // sin catálogo, skip
+
+    results.push({textoOCR:name, matches, elegido:matches[0]||null, qty, nu:pu, manual:!matches.length});
   }
-}
-function addMan(){
-  const n=document.getElementById('mn')?.value.trim();
-  const q=parseFloat(document.getElementById('mq')?.value)||1;
-  const p=parseFloat(document.getElementById('mp')?.value)||0;
-  if(!n){alert('Ingresa el nombre del producto');return;}
-  const found=lookup(n);const sub2=found?.[2]||'General';
-  manItems.push({nombre:n,qty:q,pu:p,area:found?.[0]||'Sin clasificar',cat:found?.[1]||'Sin clasificar',sub2,costs:calcCosts(p,q,sub2)});
-  renderNueva();
-}
-function delMan(i){manItems.splice(i,1);renderNueva();}
-function guardarMan(){
-  if(!manItems.length){alert('Agrega al menos un producto');return;}
-  const neto=manItems.reduce((s,it)=>s+it.costs.neto,0);
-  const total=manItems.reduce((s,it)=>s+it.costs.total,0);
-  DB.push({prov:fProv,fecha:fFecha,totalNeto:neto,totalConImp:total,src:'manual',items:[...manItems]});
-  saveDB();step='ok';renderNueva();
+
+  // Deduplicar por elegido.prod.id
+  const seen=new Set();
+  return results.filter(r=>{
+    if(!r.elegido) return true; // sin match: siempre incluir para revisión
+    const k=r.elegido.prod.id;
+    if(seen.has(k))return false; seen.add(k); return true;
+  });
 }
 
-/* ════════════════════════════════
-   PROYECCIÓN FINANCIERA / PE
-   ════════════════════════════════ */
-let peTab='config';
+/* ── Paso 3: revisión OCR ── */
+function renderFacReview(){
+  const matched=ocrResults.filter(r=>r.elegido);
+  const unmatched=ocrResults.filter(r=>!r.elegido);
 
-function renderPE(){
-  const el=document.getElementById('pg-pe');
-  const segHtml=`
-    <div class="seg">
-      <button class="seg-btn ${peTab==='config'?'on':''}" onclick="peTab='config';renderPE()">Configurar</button>
-      <button class="seg-btn ${peTab==='pe'?'on':''}" onclick="peTab='pe';renderPE()">Punto Equilibrio</button>
-      <button class="seg-btn ${peTab==='sim'?'on':''}" onclick="peTab='sim';renderPE()">Simulador</button>
-    </div>`;
+  return`
+    ${matched.length?`
+    <div class="ibox green"><i class="ti ti-check" style="font-size:16px;flex-shrink:0"></i>
+    <span><b>${matched.length} producto${matched.length>1?'s':''}</b> reconocido${matched.length>1?'s':''} del catálogo. Revisa cantidades y precios.</span></div>`:''}
+    ${unmatched.length?`
+    <div class="ibox orange"><i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0"></i>
+    <span><b>${unmatched.length} línea${unmatched.length>1?'s':''}</b> sin match en catálogo. Puedes asignarlas manualmente.</span></div>`:''}
+    ${!ocrResults.length?`
+    <div class="ibox orange"><i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0"></i>
+    <span>No se detectaron líneas de productos. Revisa la calidad de la foto o ingresa manualmente.</span></div>`:''}
 
-  if(peTab==='config'){
-    el.innerHTML=segHtml+renderPEConfig();
-  } else if(peTab==='pe'){
-    el.innerHTML=segHtml+renderPECalc();
-  } else {
-    el.innerHTML=segHtml+renderPESim();
-  }
+    ${matched.map((r,i)=>renderReviewLine(r,i)).join('')}
+    ${unmatched.map((r,i)=>renderUnmatchedLine(r,matched.length+i)).join('')}
+
+    <div style="height:1px;background:var(--border);margin:14px 0"></div>
+    <button class="btn-p" onclick="confirmarOCR()"><i class="ti ti-check"></i>Confirmar y guardar</button>
+    <button class="btn-o" style="justify-content:center" onclick="fStep='edit';renderFactura()">
+      <i class="ti ti-edit"></i>Editar manualmente</button>
+    <button class="btn-o" style="justify-content:center" onclick="fStep='choose';ocrResults=[];renderFactura()">
+      <i class="ti ti-camera"></i>Escanear de nuevo</button>`;
 }
 
-/* ── Config ── */
-function renderPEConfig(){
-  const cf=PE.cfijos;
-  const totalCF=cf.reduce((s,c)=>s+c.monto,0);
-  return `
-    <div class="slbl">Parámetros del negocio</div>
-    <div class="card cp">
-      <div class="ff"><label>Venta mensual estimada ($)</label>
-        <input type="number" value="${PE.ventaMensual||''}" placeholder="Ej: 5000000" onchange="PE.ventaMensual=parseFloat(this.value)||0;savePE()"></div>
-      <div class="ff"><label>Margen bruto objetivo (%)</label>
-        <input type="number" value="${PE.margenBruto}" placeholder="35" min="1" max="99" onchange="PE.margenBruto=parseFloat(this.value)||35;savePE()"></div>
-      <div class="g2">
-        <div class="ff"><label>Días hábiles/mes</label>
-          <input type="number" value="${PE.diasMes}" placeholder="26" min="1" max="31" onchange="PE.diasMes=parseInt(this.value)||26;savePE()"></div>
-        <div class="ff"><label>Turnos/día</label>
-          <input type="number" value="${PE.turnosPorDia}" placeholder="2" min="1" max="5" onchange="PE.turnosPorDia=parseInt(this.value)||2;savePE()"></div>
+function renderReviewLine(r,i){
+  const p=r.elegido.prod, c=calcImp(r.nu,r.qty,p.imp);
+  const t=IMP[p.imp];
+  return`
+  <div class="pline" id="rl-${i}">
+    <div class="pline-top">
+      <div>
+        <div class="pline-name">${p.nombre}</div>
+        <div class="pline-path">${p.area} · ${p.categoria||''}</div>
+        <div class="match-ocr">OCR: "${r.textoOCR}"</div>
+        <span class="badge bg" style="margin-top:4px">Match ${r.elegido.score}%</span>
+        <span class="tpill ${t.ad>0?'tp-ex':'tp-ok'}">${t.n} (${fmtP(t.iva+t.ad)})</span>
       </div>
-      <div class="g2">
-        <div class="ff"><label>Ticket promedio ($)</label>
-          <input type="number" value="${PE.ticketPromedio||''}" placeholder="Ej: 8500" onchange="PE.ticketPromedio=parseFloat(this.value)||0;savePE()"></div>
-        <div class="ff"><label>Coberturas/turno</label>
-          <input type="number" value="${PE.coberturas||''}" placeholder="Ej: 40" onchange="PE.coberturas=parseFloat(this.value)||0;savePE()"></div>
+      <button class="del-btn" onclick="removeOCRLine(${i})"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="pline-inp-row">
+      <div>
+        <span class="ninp-lbl">Cantidad</span>
+        <input class="ninp" type="number" min="0.001" step="any" value="${r.qty}"
+          onchange="ocrResults[${i}].qty=parseFloat(this.value)||1;updOCRLine(${i})">
+      </div>
+      <div>
+        <span class="ninp-lbl">Precio neto unit.</span>
+        <input class="ninp" type="number" min="0" value="${r.nu||''}"
+          placeholder="0" onchange="ocrResults[${i}].nu=parseFloat(this.value)||0;updOCRLine(${i})">
+      </div>
+      <div style="text-align:right">
+        <span class="ninp-lbl">Total c/imp</span>
+        <div id="rl-tot-${i}" style="font-size:15px;font-weight:800;padding-top:7px">${r.nu>0?fmt(c.total):'—'}</div>
       </div>
     </div>
+  </div>`;
+}
 
-    <div class="slbl">Costos fijos mensuales</div>
-    <div class="info-box"><i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0"></i>
-    <span>Arriendos, sueldos, servicios básicos, seguros, licencias — todo lo que pagas aunque no vendas nada.</span></div>
-    <div class="card" id="cf-list">
-      ${cf.length?cf.map((c,i)=>`
-        <div class="cf-item">
-          <div class="cf-dot" style="background:${cfColor(i)}"></div>
-          <div class="cf-name"><div style="font-weight:500">${c.nombre}</div><div style="font-size:11px;color:var(--t3)">${c.tipo}</div></div>
-          <div class="cf-amt">${fmt(c.monto)}</div>
-          <button class="cf-del" onclick="delCF(${i})"><i class="ti ti-x"></i></button>
-        </div>`).join('')+`
-        <div style="display:flex;justify-content:space-between;padding:12px 14px;border-top:0.5px solid #f0f0f0;font-size:13px">
-          <span style="color:#666;font-weight:500">Total costos fijos</span>
-          <span style="font-weight:700;font-size:15px">${fmt(totalCF)}</span>
-        </div>`
-      :'<div style="padding:14px;font-size:13px;color:var(--t3);text-align:center">Sin costos fijos configurados</div>'}
+function renderUnmatchedLine(r,i){
+  const opts=r.matches.slice(0,5);
+  return`
+  <div class="pline" id="rl-${i}" style="border-color:var(--a);background:var(--al)">
+    <div class="pline-top">
+      <div>
+        <div class="pline-name" style="color:var(--a)">Sin coincidencia</div>
+        <div class="match-ocr" style="color:var(--a)">"${r.textoOCR}"</div>
+      </div>
+      <button class="del-btn" onclick="removeOCRLine(${i})"><i class="ti ti-x"></i></button>
     </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--t2);font-weight:600">Asignar a producto:</div>
+    <select style="width:100%;margin-top:6px;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;background:#fff"
+      onchange="assignOCRLine(${i},this.value)">
+      <option value="">Seleccionar...</option>
+      ${opts.map(m=>`<option value="${m.prod.id}">${m.prod.nombre} (${m.score}%)</option>`).join('')}
+      ${CAT.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('')}
+    </select>
+  </div>`;
+}
+
+function updOCRLine(i){
+  const r=ocrResults[i]; if(!r||!r.elegido)return;
+  const c=calcImp(r.nu,r.qty,r.elegido.prod.imp);
+  const el=document.getElementById(`rl-tot-${i}`);
+  if(el) el.textContent=r.nu>0?fmt(c.total):'—';
+}
+function removeOCRLine(i){ ocrResults.splice(i,1); renderFactura(); }
+function assignOCRLine(i,prodId){
+  const p=CAT.find(x=>x.id===prodId); if(!p)return;
+  ocrResults[i].elegido={prod:p,score:100,alias:'manual'}; ocrResults[i].manual=false;
+  renderFactura();
+}
+
+function confirmarOCR(){
+  const activos=ocrResults.filter(r=>r.elegido&&r.nu>0);
+  if(!activos.length){alert('Agrega al menos un producto con precio');return;}
+  fItems=activos.map(r=>{
+    const p=r.elegido.prod, c=calcImp(r.nu,r.qty,p.imp);
+    return{prodId:p.id,nombre:p.nombre,area:p.area,categoria:p.categoria,sub:p.sub,imp:p.imp,qty:r.qty,nu:r.nu,c};
+  });
+  guardarFac('ocr');
+}
+
+/* ── Paso 4: edición manual ── */
+function renderFacEdit(){
+  const total=fItems.reduce((s,it)=>s+it.c.total,0);
+  const neto =fItems.reduce((s,it)=>s+it.c.neto,0);
+  return`
     <div class="card cp" style="margin-bottom:10px">
-      <div style="font-size:12px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Agregar costo fijo</div>
-      <div class="ff" style="margin-bottom:8px"><label>Descripción</label>
-        <input id="cf-nom" placeholder="Ej: Arriendo local, Sueldo cocinero..."></div>
-      <div class="g2">
-        <div class="ff" style="margin:0"><label>Monto mensual ($)</label>
-          <input type="number" id="cf-monto" placeholder="0"></div>
-        <div class="ff" style="margin:0"><label>Tipo</label>
-          <select id="cf-tipo">
-            <option>Personal</option><option>Arriendo</option><option>Servicios básicos</option>
-            <option>Marketing</option><option>Contabilidad</option><option>Seguros</option><option>Otro</option>
-          </select></div>
+      <div class="grid2">
+        <div class="ff" style="margin:0"><label>Proveedor</label>
+          <input id="f-prov2" value="${fProv}" oninput="fProv=this.value"></div>
+        <div class="ff" style="margin:0"><label>Fecha</label>
+          <input type="date" id="f-fecha2" value="${fFecha}" oninput="fFecha=this.value"></div>
       </div>
-      <button class="fab" style="margin-top:8px;margin-bottom:0;height:42px;font-size:13px" onclick="addCF()">
-        <i class="ti ti-plus"></i>Agregar</button>
-    </div>`;
-}
-
-function cfColor(i){
-  const colors=['#1a6b4a','#185fa5','#854f0b','#a32d2d','#6b3fa0','#0d6e6e','#5a6b1a','#6b1a4a'];
-  return colors[i%colors.length];
-}
-function addCF(){
-  const n=document.getElementById('cf-nom')?.value.trim();
-  const m=parseFloat(document.getElementById('cf-monto')?.value)||0;
-  const t=document.getElementById('cf-tipo')?.value||'Otro';
-  if(!n||!m){alert('Completa nombre y monto');return;}
-  PE.cfijos.push({nombre:n,monto:m,tipo:t});
-  savePE();renderPE();
-}
-function delCF(i){PE.cfijos.splice(i,1);savePE();renderPE();}
-
-/* ── Punto de Equilibrio ── */
-function renderPECalc(){
-  const cf=PE.cfijos.reduce((s,c)=>s+c.monto,0);
-  const mg=PE.margenBruto/100;
-  const diasMes=PE.diasMes||26;
-  const ticket=PE.ticketPromedio||0;
-  const coberturas=PE.coberturas||0;
-  const turnos=PE.turnosPorDia||2;
-
-  // Calcular costos variables del último mes desde DB
-  const now=new Date();
-  const cvMes=DB.filter(f=>{const d=new Date(f.fecha);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).reduce((s,f)=>s+f.totalNeto,0);
-  const ventaM=PE.ventaMensual||0;
-  const mgReal=ventaM>0?(1-cvMes/ventaM)*100:null;
-
-  if(!cf){
-    return `<div class="danger-box" style="flex-direction:column;align-items:flex-start">
-      <div style="display:flex;gap:8px;align-items:center"><i class="ti ti-alert-triangle" style="font-size:18px;flex-shrink:0"></i><b>Configura tus costos fijos primero</b></div>
-      <div style="margin-top:6px">Ve a la pestaña "Configurar" e ingresa tus costos fijos mensuales para calcular el punto de equilibrio.</div>
     </div>
-    <button class="btn-out" style="justify-content:center" onclick="peTab='config';renderPE()"><i class="ti ti-settings"></i>Ir a configurar</button>`;
-  }
 
-  // Punto de equilibrio = CF / Margen bruto
-  const peVenta=Math.round(cf/mg);
-  const peDiario=Math.round(peVenta/diasMes);
-  const peSemanal=Math.round(peVenta/4.33);
-  // Coberturas diarias mínimas para PE
-  const cobMin=ticket>0?Math.ceil(peDiario/ticket):null;
-  // Venta mínima por turno
-  const ventaTurno=Math.round(peDiario/turnos);
-  const cobTurno=ticket>0?Math.ceil(cobMin/turnos):null;
+    <div class="slbl">Buscar producto del catálogo</div>
+    <div class="srap">
+      <i class="ti ti-search"></i>
+      <input class="sinp" id="f-q" placeholder="Buscar en catálogo..." oninput="renderFacDrop(this.value)" autocomplete="off">
+    </div>
+    <div id="f-drop"></div>
 
-  // % de cobertura del PE si hay venta configurada
-  const pctPE=ventaM>0?Math.min(100,Math.round(ventaM/peVenta*100)):null;
-
-  const ringColor=pctPE!==null?(pctPE>=100?'#1a6b4a':pctPE>=75?'#854f0b':'#a32d2d'):'#1a6b4a';
-  const ringPct=pctPE!==null?Math.min(100,pctPE):0;
-  const r=44, circ=2*Math.PI*r;
-  const dash=circ*(ringPct/100);
-
-  return `
-    ${pctPE!==null?`
-    <div style="text-align:center;padding:8px 0 4px">
-      <div class="pe-ring">
-        <svg width="120" height="120" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="${r}" fill="none" stroke="#f0f0f0" stroke-width="10"/>
-          <circle cx="60" cy="60" r="${r}" fill="none" stroke="${ringColor}" stroke-width="10"
-            stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}" stroke-linecap="round"/>
-        </svg>
-        <div class="pe-inner">
-          <div class="pe-pct" style="color:${ringColor}">${ringPct}%</div>
-          <div class="pe-lbl">del PE</div>
+    ${fItems.length?`
+      <div class="slbl">Productos agregados (${fItems.length})</div>
+      ${fItems.map((it,i)=>renderEditLine(it,i)).join('')}
+      <div class="total-row" style="border-radius:12px;border:1px solid var(--border);margin-bottom:10px;background:#fff;box-shadow:var(--sh)">
+        <div>
+          <div class="total-lbl">Total con impuestos</div>
+          <div style="font-size:11px;color:var(--t3)">Neto: ${fmt(neto)} · Imp: ${fmt(total-neto)}</div>
         </div>
+        <div class="total-v">${fmt(total)}</div>
       </div>
-      <div style="font-size:12px;color:var(--t3);margin-bottom:12px">
-        ${pctPE>=100?'✅ Tu venta estimada supera el punto de equilibrio':'Venta estimada vs. lo mínimo para no perder'}
-      </div>
-    </div>`:''}
+      <button class="btn-p" onclick="guardarFac('manual')"><i class="ti ti-check"></i>Guardar factura</button>
+    `:''}`;
+}
 
-    <div class="kpi-big">
-      <div class="val">${fmt(peVenta)}</div>
-      <div class="lbl">Venta mínima mensual para no perder dinero</div>
-      <div class="sub">Con ${fmtP(PE.margenBruto)} margen bruto y ${fmt(cf)} en costos fijos</div>
+function renderFacDrop(q){
+  const el=document.getElementById('f-drop');
+  if(!q||q.length<2){el.innerHTML='';return;}
+  const found=CAT.filter(p=>{
+    const s=norm(p.nombre)+' '+(p.aliases||[]).map(norm).join(' ');
+    return s.includes(norm(q));
+  }).slice(0,8);
+  if(!found.length){
+    el.innerHTML=`<div class="drop"><div style="padding:12px 14px;font-size:13px;color:var(--t3);text-align:center">
+      Sin resultados · <a href="#" onclick="modalProd(null);return false" style="color:var(--g);font-weight:700">Crear producto</a>
+    </div></div>`;return;
+  }
+  el.innerHTML=`<div class="drop">${found.map(p=>`
+    <div class="dopt" onclick="addFItem('${p.id}')">
+      <div style="width:34px;height:34px;border-radius:9px;background:${aColor(p.area)}22;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ${aIcon(p.area)}" style="color:${aColor(p.area)};font-size:16px"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600">${p.nombre}</div>
+        <div style="font-size:11px;color:var(--t3)">${p.area} · ${p.categoria||''} · ${IMP[p.imp]?.n}</div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function addFItem(id){
+  const p=CAT.find(x=>x.id===id); if(!p)return;
+  const nu=0, qty=1, c=calcImp(nu,qty,p.imp);
+  fItems.push({prodId:id,nombre:p.nombre,area:p.area,categoria:p.categoria,sub:p.sub,imp:p.imp,qty,nu,c});
+  document.getElementById('f-q').value='';
+  document.getElementById('f-drop').innerHTML='';
+  renderFactura();
+  setTimeout(()=>document.getElementById(`fi-nu-${fItems.length-1}`)?.focus(),100);
+}
+
+function renderEditLine(it,i){
+  const t=IMP[it.imp]||IMP['iva'];
+  return`
+  <div class="pline">
+    <div class="pline-top">
+      <div>
+        <div class="pline-name">${it.nombre}</div>
+        <div class="pline-path">${it.area} · ${it.categoria||''}</div>
+        <span class="tpill ${t.ad>0?'tp-ex':'tp-ok'}">${t.n} (${fmtP(t.iva+t.ad)})</span>
+      </div>
+      <button class="del-btn" onclick="fItems.splice(${i},1);renderFactura()"><i class="ti ti-x"></i></button>
     </div>
-
-    <div class="met-row">
-      <div class="met" style="text-align:center">
-        <div class="met-l">Venta mínima diaria</div>
-        <div class="met-v" style="font-size:18px">${fmt(peDiario)}</div>
-        <div class="met-s">${diasMes} días hábiles</div>
+    <div class="pline-inp-row">
+      <div>
+        <span class="ninp-lbl">Cantidad</span>
+        <input class="ninp" type="number" min="0.001" step="any" value="${it.qty||1}"
+          onchange="fItems[${i}].qty=parseFloat(this.value)||1;fItems[${i}].c=calcImp(fItems[${i}].nu,fItems[${i}].qty,fItems[${i}].imp);renderFactura()">
       </div>
-      <div class="met" style="text-align:center">
-        <div class="met-l">Venta mínima semanal</div>
-        <div class="met-v" style="font-size:18px">${fmt(peSemanal)}</div>
+      <div>
+        <span class="ninp-lbl">Precio neto unit.</span>
+        <input id="fi-nu-${i}" class="ninp" type="number" min="0" value="${it.nu||''}" placeholder="0"
+          onchange="fItems[${i}].nu=parseFloat(this.value)||0;fItems[${i}].c=calcImp(fItems[${i}].nu,fItems[${i}].qty,fItems[${i}].imp);renderFactura()">
+      </div>
+      <div style="text-align:right">
+        <span class="ninp-lbl">Total c/imp</span>
+        <div style="font-size:15px;font-weight:800;padding-top:7px">${it.nu>0?fmt(it.c.total):'—'}</div>
       </div>
     </div>
+  </div>`;
+}
 
-    ${turnos>1?`<div class="met-row">
-      <div class="met" style="text-align:center">
-        <div class="met-l">Por turno (${turnos}/día)</div>
-        <div class="met-v" style="font-size:18px">${fmt(ventaTurno)}</div>
+/* ── Guardar ── */
+function guardarFac(src){
+  if(!fProv.trim()){alert('Ingresa el proveedor');return;}
+  if(!fItems.length){alert('Agrega al menos un producto');return;}
+  const neto =fItems.reduce((s,it)=>s+it.c.neto,0);
+  const total=fItems.reduce((s,it)=>s+it.c.total,0);
+  FAC.push({
+    id:'f'+Date.now(), prov:fProv, fecha:fFecha, src,
+    totalNeto:neto, totalConImp:total,
+    items:fItems.map(it=>({
+      prodId:it.prodId, nombre:it.nombre, area:it.area,
+      categoria:it.categoria||'', imp:it.imp,
+      qty:it.qty, nu:it.nu,
+      totalNeto:it.c.neto, totalConImp:it.c.total,
+      iva:it.c.iva, ad:it.c.ad
+    }))
+  });
+  sf(); fStep='ok'; renderFactura();
+}
+
+/* ── Paso 5: ok ── */
+function renderFacOk(){
+  const last=FAC[FAC.length-1];
+  return`
+  <div style="text-align:center;padding:30px 0 20px">
+    <i class="ti ti-circle-check" style="font-size:56px;color:var(--g);display:block;margin-bottom:16px"></i>
+    <div style="font-size:20px;font-weight:800;margin-bottom:6px">Factura guardada</div>
+    <div style="font-size:13px;color:var(--t3);margin-bottom:6px">${last?.items.length} productos · ${fmt(last?.totalConImp||0)}</div>
+  </div>
+  <button class="btn-p" onclick="go('home',document.querySelectorAll('.bnav')[0])">
+    <i class="ti ti-home"></i>Ver resumen
+  </button>
+  <button class="btn-o" style="justify-content:center" onclick="fItems=[];ocrResults=[];fProv='';fFecha=today();fStep='choose';renderFactura()">
+    <i class="ti ti-plus"></i>Ingresar otra factura
+  </button>`;
+}
+
+function verFac(i){
+  const f=FAC[i];
+  openModal(`
+    <div class="mtitle">${f.prov}</div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:14px">${f.fecha} · <span class="badge ${f.src==='ocr'?'bg':'bb'}">${f.src==='ocr'?'OCR':'Manual'}</span></div>
+    ${f.items.map(it=>{const t=IMP[it.imp]||IMP['iva'];const hadAd=it.ad>0;return`
+      <div style="padding:10px 0;border-bottom:1px solid var(--border2)">
+        <div style="display:flex;justify-content:space-between">
+          <div style="font-size:14px;font-weight:700">${it.nombre}</div>
+          <div style="font-size:14px;font-weight:800">${fmt(it.totalConImp)}</div>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px">${it.area}${it.categoria?' · '+it.categoria:''}</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:4px">${it.qty} × ${fmt(it.nu)} neto · ${t.n}
+          ${hadAd?`<span style="color:var(--r)"> · imp.ad. ${fmt(it.ad)}</span>`:''}
+        </div>
+      </div>`}).join('')}
+    <div style="display:flex;justify-content:space-between;padding:14px 0;font-size:15px">
+      <div>
+        <div style="font-weight:700">Total con impuestos</div>
+        <div style="font-size:11px;color:var(--t3)">Neto ${fmt(f.totalNeto)} · Imp ${fmt(f.totalConImp-f.totalNeto)}</div>
       </div>
-      ${cobTurno!==null?`<div class="met" style="text-align:center">
-        <div class="met-l">Coberturas/turno mínimas</div>
-        <div class="met-v" style="font-size:18px">${cobTurno}</div>
-        <div class="met-s">ticket ${fmt(ticket)}</div>
-      </div>`:''}
-    </div>`:''}
+      <div style="font-size:22px;font-weight:800">${fmt(f.totalConImp)}</div>
+    </div>
+    <button onclick="if(confirm('¿Eliminar?')){FAC.splice(${i},1);sf();closeM();renderHome()}" 
+      style="width:100%;padding:12px;border:1px solid var(--r);background:var(--rl);color:var(--r);border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+      <i class="ti ti-trash" style="vertical-align:-2px"></i> Eliminar factura
+    </button>`);
+}
 
-    ${cobMin!==null?`<div class="card cp" style="text-align:center">
-      <div style="font-size:12px;color:var(--t3);margin-bottom:4px">Coberturas diarias mínimas para equilibrio</div>
-      <div style="font-size:36px;font-weight:700;color:var(--g)">${cobMin}</div>
-      <div style="font-size:12px;color:var(--t3)">ticket promedio de ${fmt(ticket)}</div>
-    </div>`:''}
+/* ══════════════════════════════════════
+   ANÁLISIS
+══════════════════════════════════════ */
+let aTab='familias';
+function renderAnalisis(){
+  const seg=`<div class="seg">
+    <button class="seg-btn ${aTab==='familias'?'on':''}" onclick="aTab='familias';renderAnalisis()">Familias</button>
+    <button class="seg-btn ${aTab==='tendencia'?'on':''}" onclick="aTab='tendencia';renderAnalisis()">Tendencia</button>
+    <button class="seg-btn ${aTab==='productos'?'on':''}" onclick="aTab='productos';renderAnalisis()">Productos</button>
+  </div>`;
+  if(!FAC.length){
+    document.getElementById('pg-analisis').innerHTML=seg+`
+      <div class="empty"><i class="ti ti-chart-bar"></i>
+      <div class="empty-t">Sin datos</div>
+      <div class="empty-s">Ingresa facturas para ver el análisis por familia, tendencia mensual y top de productos.</div></div>`;
+    return;
+  }
+  document.getElementById('pg-analisis').innerHTML=seg+(aTab==='familias'?renderFamilias():aTab==='tendencia'?renderTendencia():renderTopProd());
+}
 
-    <div class="slbl">Composición de costos fijos</div>
+function renderFamilias(){
+  const m=curM();
+  const fMes=FAC.filter(f=>f.fecha.startsWith(m));
+  const byArea={};
+  fMes.forEach(f=>f.items.forEach(it=>{
+    const a=it.area||'Sin área';
+    if(!byArea[a]) byArea[a]={total:0,neto:0,imp:0,cats:{}};
+    byArea[a].total+=it.totalConImp; byArea[a].neto+=it.totalNeto; byArea[a].imp+=it.totalConImp-it.totalNeto;
+    const c=it.categoria||'General';
+    byArea[a].cats[c]=(byArea[a].cats[c]||0)+it.totalConImp;
+  }));
+  const totalM=Object.values(byArea).reduce((s,v)=>s+v.total,0)||1;
+  const sorted=Object.entries(byArea).sort((a,b)=>b[1].total-a[1].total);
+
+  if(!sorted.length) return`<div class="ibox orange"><i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0"></i><span>Sin facturas este mes.</span></div>`;
+
+  return`
+    <div class="slbl">Este mes · ${fmt(totalM)} total</div>
     <div class="card">
-      ${PE.cfijos.map((c,i)=>`
-        <div class="cf-item">
-          <div class="cf-dot" style="background:${cfColor(i)}"></div>
-          <div class="cf-name"><div style="font-weight:500">${c.nombre}</div><div style="font-size:11px;color:var(--t3)">${c.tipo}</div></div>
-          <div>
-            <div class="cf-amt">${fmt(c.monto)}</div>
-            <div style="font-size:11px;color:var(--t3);text-align:right">${Math.round(c.monto/cf*100)}%</div>
+      ${sorted.map(([area,d])=>`
+        <div style="padding:13px 14px;border-bottom:1px solid var(--border2)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:12px;height:12px;border-radius:3px;background:${aColor(area)};flex-shrink:0"></div>
+              <span style="font-size:14px;font-weight:700">${area}</span>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:14px;font-weight:800">${fmt(d.total)}</div>
+              <div style="font-size:11px;color:var(--t3)">${Math.round(d.total/totalM*100)}% del total</div>
+            </div>
+          </div>
+          <div class="bar-track" style="height:8px;margin-bottom:10px">
+            <div class="bar-fill" style="width:${Math.round(d.total/totalM*100)}%;background:${aColor(area)}"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+            ${Object.entries(d.cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`
+              <div style="font-size:12px;color:var(--t2);display:flex;justify-content:space-between;background:var(--bg);padding:5px 8px;border-radius:6px">
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px">${c}</span>
+                <span style="font-weight:700;flex-shrink:0;margin-left:4px">${fmt(v)}</span>
+              </div>`).join('')}
+          </div>
+          <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:var(--t3)">
+            <span>Neto: ${fmt(d.neto)}</span>
+            <span style="color:var(--r)">Imp: ${fmt(d.imp)}</span>
           </div>
         </div>`).join('')}
-      <div style="display:flex;justify-content:space-between;padding:12px 14px;border-top:0.5px solid #f0f0f0">
-        <span style="font-weight:600">Total CF</span>
-        <span style="font-weight:700">${fmt(cf)}</span>
+    </div>
+    <div class="slbl">Acumulado histórico por familia</div>
+    <div class="card cp">${renderHistFam()}</div>`;
+}
+
+function renderHistFam(){
+  const byA={};
+  FAC.forEach(f=>f.items.forEach(it=>{const a=it.area||'?'; byA[a]=(byA[a]||0)+it.totalConImp;}));
+  const tot=Object.values(byA).reduce((s,v)=>s+v,0)||1;
+  return Object.entries(byA).sort((a,b)=>b[1]-a[1]).map(([a,v])=>`
+    <div class="bar-row">
+      <div class="bar-lbl">${a}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/tot*100)}%;background:${aColor(a)}"></div></div>
+      <div class="bar-val">${fmt(v)}</div>
+    </div>`).join('');
+}
+
+function renderTendencia(){
+  const meses={};
+  FAC.forEach(f=>{
+    const m=f.fecha.slice(0,7);
+    if(!meses[m]) meses[m]={total:0,neto:0,imp:0,facs:0};
+    meses[m].total+=f.totalConImp; meses[m].neto+=f.totalNeto;
+    meses[m].imp+=f.totalConImp-f.totalNeto; meses[m].facs++;
+  });
+  const sorted=Object.entries(meses).sort((a,b)=>a[0]>b[0]?1:-1).slice(-6);
+  const maxV=Math.max(...sorted.map(([,v])=>v.total),1);
+  const vari=sorted.map(([,v],i)=>{
+    if(!i) return null;
+    const p=sorted[i-1][1].total;
+    return p>0?Math.round((v.total-p)/p*100):null;
+  });
+
+  return`
+    <div class="slbl">Evolución mensual</div>
+    <div class="card cp">
+      <div class="chart-cols">
+        ${sorted.map(([m,v],i)=>`
+          <div class="chart-col">
+            ${vari[i]!==null?`<div style="font-size:9px;font-weight:700;color:${vari[i]>0?'var(--r)':'var(--g)'};text-align:center">${vari[i]>0?'▲':'▼'}${Math.abs(vari[i])}%</div>`:'<div style="font-size:9px;color:transparent">-</div>'}
+            <div class="chart-bar" style="height:${Math.round(v.total/maxV*76)}px;background:${m===curM()?'var(--g)':'#b8ddd0'}"></div>
+            <div class="chart-lbl">${mName(m)}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="slbl">Detalle por mes</div>
+    <div class="card">
+      ${sorted.slice().reverse().map(([m,v],i)=>`
+        <div class="row">
+          <div style="width:38px;height:38px;border-radius:10px;background:${m===curM()?'var(--gl)':'var(--bg)'};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:${m===curM()?'var(--gd)':'var(--t2)'};flex-shrink:0;text-align:center;line-height:1.2">${mName(m)}</div>
+          <div class="row-info">
+            <div class="row-t">${fmt(v.total)}</div>
+            <div class="row-s">Neto ${fmt(v.neto)} · Imp ${fmt(v.imp)} · ${v.facs} factura${v.facs>1?'s':''}</div>
+          </div>
+          ${vari[sorted.length-1-i]!==null?`<span class="badge ${vari[sorted.length-1-i]>0?'br':'bg'}">${vari[sorted.length-1-i]>0?'▲':'▼'}${Math.abs(vari[sorted.length-1-i])}%</span>`:''}
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderTopProd(){
+  const prod={};
+  FAC.forEach(f=>f.items.forEach(it=>{
+    if(!prod[it.nombre]) prod[it.nombre]={total:0,qty:0,area:it.area,cat:it.categoria,n:0};
+    prod[it.nombre].total+=it.totalConImp; prod[it.nombre].qty+=it.qty; prod[it.nombre].n++;
+  }));
+  const sorted=Object.entries(prod).sort((a,b)=>b[1].total-a[1].total).slice(0,20);
+  if(!sorted.length) return`<div class="ibox orange"><i class="ti ti-alert-triangle" style="flex-shrink:0"></i><span>Sin datos.</span></div>`;
+  const maxV=sorted[0][1].total;
+  return`
+    <div class="slbl">Top 20 por costo acumulado</div>
+    <div class="card">
+      ${sorted.map(([n,d],i)=>`
+        <div style="padding:11px 14px;border-bottom:1px solid var(--border2)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:800;color:var(--t3);width:20px;flex-shrink:0">${i+1}</div>
+              <div style="min-width:0">
+                <div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n}</div>
+                <div style="font-size:11px;color:var(--t3)">${d.area} · ${d.n} factura${d.n>1?'s':''}</div>
+              </div>
+            </div>
+            <div style="font-size:14px;font-weight:800;flex-shrink:0">${fmt(d.total)}</div>
+          </div>
+          <div class="bar-track" style="margin-top:7px;height:5px">
+            <div class="bar-fill" style="width:${Math.round(d.total/maxV*100)}%;background:${aColor(d.area)}"></div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+/* ══════════════════════════════════════
+   PROYECCIÓN FINANCIERA
+══════════════════════════════════════ */
+let pTab='ticket';
+function renderProy(){
+  const seg=`<div class="seg">
+    <button class="seg-btn ${pTab==='ticket'?'on':''}" onclick="pTab='ticket';renderProy()">Ticket mínimo</button>
+    <button class="seg-btn ${pTab==='pe'?'on':''}" onclick="pTab='pe';renderProy()">Punto equilibrio</button>
+    <button class="seg-btn ${pTab==='config'?'on':''}" onclick="pTab='config';renderProy()">Configurar</button>
+  </div>`;
+  document.getElementById('pg-proyeccion').innerHTML=seg+(pTab==='ticket'?renderTicketMin():pTab==='pe'?renderPE():renderProyConfig());
+}
+
+/* ── Ticket mínimo por cliente ── */
+function renderTicketMin(){
+  const m=curM();
+  const costoMes=FAC.filter(f=>f.fecha.startsWith(m)).reduce((s,f)=>s+f.totalConImp,0);
+  const cf=(CFG.costosF||[]).reduce((s,c)=>s+c.monto,0);
+  const margen=(CFG.margen||35)/100;
+  const dias=CFG.diasMes||26;
+  const turnos=CFG.turnosDia||2;
+  const cobT=CFG.coberturasTurno||0;
+  const cobDia=cobT*turnos;
+  const cobMes=cobDia*dias;
+
+  // Ticket mínimo = Costo total / (clientes * margen_complementario)
+  // Si el costo es X y margen bruto es M%, entonces: Ticket = CostoUnit / (1-M%)
+  // Costo unitario = costo total / clientes
+  const costoTotal=costoMes+cf; // total incluyendo costos fijos
+
+  // Caso 1: sabemos clientes estimados
+  const costoUnit=cobMes>0?costoTotal/cobMes:0;
+  const ticketMin=costoUnit>0?Math.round(costoUnit/(1-margen)):0;
+
+  // Simulador
+  const simCob=window._simCob||cobMes||100;
+  const simCU=costoTotal/simCob;
+  const simTick=Math.round(simCU/(1-margen));
+  const simVenta=Math.round(simTick*simCob);
+  const simGan=Math.round(simVenta*margen-cf);
+
+  return`
+    ${costoMes===0?`<div class="ibox orange"><i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0"></i>
+      <span>Sin costos registrados este mes. Ingresa facturas primero.</span></div>`:''}
+    ${!cf&&!CFG.costosF?.length?`<div class="ibox blue"><i class="ti ti-bulb" style="font-size:16px;flex-shrink:0"></i>
+      <span>Agrega costos fijos (arriendo, sueldos, servicios) en <b>Configurar</b> para una proyección más precisa.</span></div>`:''}
+
+    <div class="grid2" style="margin-bottom:10px">
+      <div class="met">
+        <div class="met-l">Costo variable mes</div>
+        <div class="met-v">${fmt(costoMes)}</div>
+        <div class="met-s">Ingredientes e insumos</div>
+      </div>
+      <div class="met">
+        <div class="met-l">Costos fijos mes</div>
+        <div class="met-v">${fmt(cf)}</div>
+        <div class="met-s">${(CFG.costosF||[]).length} ítems</div>
       </div>
     </div>
 
-    ${mgReal!==null?`<div class="slbl">Margen real este mes</div>
-    <div class="${mgReal>=PE.margenBruto?'ok-box':'warn-box'}">
-      <i class="ti ti-${mgReal>=PE.margenBruto?'trending-up':'trending-down'}" style="font-size:18px;flex-shrink:0"></i>
-      <div>Margen bruto real: <b>${mgReal.toFixed(1)}%</b> (objetivo: ${fmtP(PE.margenBruto)})<br>
-      Costo variables: ${fmt(cvMes)} sobre venta de ${fmt(ventaM)}</div>
+    ${ticketMin>0?`
+    <div class="kpi-big azul">
+      <div class="kpi-val">${fmt(ticketMin)}</div>
+      <div class="kpi-lbl">Ticket mínimo por cliente para cubrir costos</div>
+      <div class="kpi-sub">${cobMes} clientes/mes · margen ${CFG.margen||35}%</div>
     </div>`:''}
 
-    <div class="slbl">Escenarios</div>
+    <div class="slbl">Simulador · ¿Cuánto cobrar según la afluencia?</div>
+    <div class="card cp">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--t2);font-weight:600">Clientes estimados/mes</span>
+        <span style="font-size:16px;font-weight:800" id="sim-cob-val">${simCob}</span>
+      </div>
+      <input type="range" class="range" id="sim-cob"
+        min="10" max="${Math.max(2000,simCob*2)}" step="10" value="${simCob}"
+        oninput="window._simCob=parseInt(this.value);document.getElementById('sim-cob-val').textContent=this.value;updSim()">
+
+      <div style="height:1px;background:var(--border2);margin:14px 0"></div>
+
+      <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid var(--border2)">
+        <span style="color:var(--t2)">Costo por cliente</span>
+        <span id="s-cu" style="font-weight:700">${fmt(simCU)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid var(--border2)">
+        <span style="color:var(--t2)">Ticket mínimo (margen ${CFG.margen||35}%)</span>
+        <span id="s-tick" style="font-weight:800;font-size:16px;color:var(--b)">${fmt(simTick)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid var(--border2)">
+        <span style="color:var(--t2)">Venta mensual proyectada</span>
+        <span id="s-venta" style="font-weight:700">${fmt(simVenta)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px">
+        <span style="color:var(--t2)">Resultado estimado</span>
+        <span id="s-gan" style="font-weight:800;font-size:16px;color:${simGan>=0?'var(--g)':'var(--r)'}">${simGan>=0?'+':''}${fmt(simGan)}</span>
+      </div>
+    </div>
+
+    <div class="slbl">Escenarios de ticket</div>
     ${[
-      {label:'🟢 Optimista +20%',mult:1.2,cls:'verde'},
-      {label:'🟡 Base (equilibrio)',mult:1.0,cls:'amarillo'},
-      {label:'🔴 Pesimista -20%',mult:0.8,cls:'rojo'}
+      {label:'🟢 Ticket alto',   mult:1.3},
+      {label:'🟡 Ticket base',   mult:1.0},
+      {label:'🔴 Ticket bajo',   mult:0.8},
     ].map(e=>{
-      const v=Math.round(peVenta*e.mult);
-      const gan=Math.round(v*mg-cf);
-      return `<div class="esc-card ${e.cls}">
-        <div class="esc-title">${e.label}</div>
-        <div class="esc-row"><span>Venta mensual</span><b>${fmt(v)}</b></div>
-        <div class="esc-row"><span>Margen bruto (${fmtP(PE.margenBruto)})</span><b>${fmt(Math.round(v*mg))}</b></div>
+      const tick=Math.round(simTick*e.mult);
+      const venta=Math.round(tick*simCob);
+      const gan=Math.round(venta*margen-cf);
+      return`<div class="esc ${gan>=0?'ok':gan>-cf*0.3?'warn':'bad'}">
+        <div class="esc-title">${e.label} · ${fmt(tick)}</div>
+        <div class="esc-row"><span>Venta proyectada</span><b>${fmt(venta)}</b></div>
+        <div class="esc-row"><span>Margen bruto (${fmtP((CFG.margen||35))})</span><b>${fmt(Math.round(venta*margen))}</b></div>
         <div class="esc-row"><span>Costos fijos</span><b style="color:var(--r)">-${fmt(cf)}</b></div>
-        <div class="esc-row" style="margin-top:4px;padding-top:4px;border-top:0.5px solid rgba(0,0,0,.1)">
-          <span style="font-weight:600">Resultado</span>
-          <b style="color:${gan>=0?'#1a6b4a':'#a32d2d'}">${gan>=0?'+':''}${fmt(gan)}</b>
+        <div class="esc-row" style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(0,0,0,.1)">
+          <span style="font-weight:700">Resultado</span>
+          <b style="font-size:14px;color:${gan>=0?'var(--gd)':'var(--r)'}">${gan>=0?'+':''}${fmt(gan)}</b>
         </div>
       </div>`;
     }).join('')}`;
 }
 
-/* ── Simulador ── */
-function renderPESim(){
-  const cf=PE.cfijos.reduce((s,c)=>s+c.monto,0);
-  const mg=PE.margenBruto/100;
+function updSim(){
+  const costoMes=FAC.filter(f=>f.fecha.startsWith(curM())).reduce((s,f)=>s+f.totalConImp,0);
+  const cf=(CFG.costosF||[]).reduce((s,c)=>s+c.monto,0);
+  const margen=(CFG.margen||35)/100;
+  const simCob=window._simCob||100;
+  const costoTotal=costoMes+cf;
+  const simCU=costoTotal/simCob;
+  const simTick=Math.round(simCU/(1-margen));
+  const simVenta=Math.round(simTick*simCob);
+  const simGan=Math.round(simVenta*margen-cf);
+  document.getElementById('s-cu').textContent=fmt(simCU);
+  document.getElementById('s-tick').textContent=fmt(simTick);
+  document.getElementById('s-venta').textContent=fmt(simVenta);
+  const sg=document.getElementById('s-gan');
+  sg.textContent=(simGan>=0?'+':'')+fmt(simGan);
+  sg.style.color=simGan>=0?'var(--g)':'var(--r)';
+}
+
+/* ── Punto de equilibrio ── */
+function renderPE(){
+  const cf=(CFG.costosF||[]).reduce((s,c)=>s+c.monto,0);
+  const margen=(CFG.margen||35)/100;
+  const dias=CFG.diasMes||26;
+  const turnos=CFG.turnosDia||2;
+  const cobT=CFG.coberturasTurno||40;
   if(!cf){
-    return`<div class="warn-box"><i class="ti ti-alert-triangle" style="flex-shrink:0"></i>Configura costos fijos primero.</div>
-    <button class="btn-out" style="justify-content:center" onclick="peTab='config';renderPE()"><i class="ti ti-settings"></i>Ir a configurar</button>`;
+    return`<div class="ibox orange"><i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0"></i>
+      <span>Agrega costos fijos en <b>Configurar</b> para calcular el punto de equilibrio.</span></div>
+      <button class="btn-o" style="justify-content:center" onclick="pTab='config';renderProy()"><i class="ti ti-settings"></i>Ir a configurar</button>`;
   }
-  const simVenta=window._simVenta||PE.ventaMensual||Math.round(cf/mg);
-  const simMg=window._simMg!==undefined?window._simMg:PE.margenBruto;
-  const ganancia=Math.round(simVenta*(simMg/100)-cf);
-  const peDiario=Math.round((cf/(simMg/100))/PE.diasMes);
-  const ganDiario=Math.round(ganancia/PE.diasMes);
+  const peVenta =Math.round(cf/margen);
+  const peDiario=Math.round(peVenta/dias);
+  const peSem   =Math.round(peVenta/4.33);
+  const cobMin  =cobT>0?Math.ceil(peDiario/(CFG.ticketRef||8000)):null;
+  const cobTurno=cobMin&&turnos>0?Math.ceil(cobMin/turnos):null;
+
+  // Costo mes actual vs PE
+  const costoMes=FAC.filter(f=>f.fecha.startsWith(curM())).reduce((s,f)=>s+f.totalConImp,0);
+  const avance=costoMes>0&&cf>0?Math.min(Math.round(costoMes/cf*100),999):null;
 
   return`
-    <div class="slbl">Simular venta mensual</div>
-    <div class="card cp">
-      <div class="sim-row">
-        <span class="sim-lbl">Venta mensual</span>
-        <span class="sim-val" id="sim-venta-val">${fmt(simVenta)}</span>
-      </div>
-      <input type="range" class="range-inp" id="sim-venta"
-        min="${Math.round(cf/mg*0.3)}" max="${Math.round(cf/mg*3)}"
-        step="${Math.round(cf/mg*0.01)}" value="${simVenta}"
-        oninput="window._simVenta=parseInt(this.value);renderPESim()">
-
-      <div class="sim-row" style="margin-top:8px">
-        <span class="sim-lbl">Margen bruto</span>
-        <span class="sim-val" id="sim-mg-val">${simMg}%</span>
-      </div>
-      <input type="range" class="range-inp" id="sim-mg"
-        min="10" max="80" step="1" value="${simMg}"
-        oninput="window._simMg=parseInt(this.value);renderPESim()">
+    <div class="kpi-big verde">
+      <div class="kpi-val">${fmt(peVenta)}</div>
+      <div class="kpi-lbl">Venta mínima mensual para no perder dinero</div>
+      <div class="kpi-sub">CF ${fmt(cf)} · Margen ${fmtP(CFG.margen||35)}</div>
     </div>
-
-    <div class="${ganancia>=0?'kpi-big':'kpi-danger'}">
-      <div class="val">${ganancia>=0?'+':''}${fmt(ganancia)}</div>
-      <div class="lbl">${ganancia>=0?'Ganancia mensual estimada':'Pérdida mensual estimada'}</div>
-      <div class="sub">${ganancia>=0?'+'+fmt(ganDiario)+' diario':fmt(Math.abs(ganDiario))+' de pérdida diaria'}</div>
-    </div>
-
-    <div class="met-row">
+    <div class="grid3">
       <div class="met">
-        <div class="met-l">Margen bruto generado</div>
-        <div class="met-v">${fmt(Math.round(simVenta*(simMg/100)))}</div>
+        <div class="met-l" style="font-size:10px">Diario</div>
+        <div class="met-v" style="font-size:17px">${fmt(peDiario)}</div>
       </div>
       <div class="met">
-        <div class="met-l">Costos fijos</div>
-        <div class="met-v" style="color:var(--r)">${fmt(cf)}</div>
-      </div>
-    </div>
-    <div class="met-row">
-      <div class="met">
-        <div class="met-l">PE diario necesario</div>
-        <div class="met-v">${fmt(peDiario)}</div>
+        <div class="met-l" style="font-size:10px">Semanal</div>
+        <div class="met-v" style="font-size:17px">${fmt(peSem)}</div>
       </div>
       <div class="met">
-        <div class="met-l">Diferencia vs PE</div>
-        <div class="met-v" style="color:${simVenta>=Math.round(cf/(simMg/100))?'var(--g)':'var(--r)'}">
-          ${simVenta>=Math.round(cf/(simMg/100))?'+':'-'}${fmt(Math.abs(simVenta-Math.round(cf/(simMg/100))))}
-        </div>
+        <div class="met-l" style="font-size:10px">Por turno</div>
+        <div class="met-v" style="font-size:17px">${fmt(Math.round(peDiario/turnos))}</div>
       </div>
     </div>
-
-    <div class="slbl">¿Qué pasa si subo el ticket promedio?</div>
+    ${cobMin!==null?`
+    <div class="kpi-big azul">
+      <div class="kpi-val">${cobMin}</div>
+      <div class="kpi-lbl">Coberturas diarias mínimas</div>
+      <div class="kpi-sub">Con ticket ${fmt(CFG.ticketRef||8000)} · ${cobTurno} por turno</div>
+    </div>`:''}
+    <div class="slbl">Costos fijos configurados</div>
     <div class="card">
-      ${[0.9,1,1.1,1.2,1.3].map(mult=>{
-        const t=Math.round((PE.ticketPromedio||5000)*mult);
-        const cobNeeded=t>0?Math.ceil(peDiario/t):null;
-        const activas=cobNeeded!==null&&PE.coberturas>0?cobNeeded<=PE.coberturas:null;
-        return`<div class="cf-item">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:500">Ticket ${fmt(t)}</div>
-            ${cobNeeded!==null?`<div style="font-size:11px;color:var(--t3)">${cobNeeded} coberturas/día para PE</div>`:''}
-          </div>
-          ${activas!==null?`<span class="badge ${activas?'bg':'br'}">${activas?'✓ Alcanzable':'Difícil'}</span>`:''}
-        </div>`;
-      }).join('')}
+      ${(CFG.costosF||[]).map((c,i)=>`
+        <div class="row">
+          <div style="width:10px;height:10px;border-radius:50%;background:${AREA_COLORS[Object.keys(AREA_COLORS)[i%7]]||'#888'};flex-shrink:0"></div>
+          <div class="row-info"><div class="row-t">${c.nombre}</div><div class="row-s">${c.tipo}</div></div>
+          <div class="row-amt">${fmt(c.monto)}</div>
+        </div>`).join('')}
+      <div class="total-row">
+        <span class="total-lbl">Total costos fijos</span>
+        <span class="total-v">${fmt(cf)}</span>
+      </div>
+    </div>
+    ${avance!==null?`
+    <div class="slbl">Costos variables vs costos fijos (mes actual)</div>
+    <div class="met">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <div class="met-l">Costo variable acumulado</div>
+        <span style="font-size:13px;font-weight:700;color:${avance<80?'var(--g)':avance<100?'var(--a)':'var(--r)'}">${avance}% del CF</span>
+      </div>
+      <div class="bar-track" style="height:10px">
+        <div class="bar-fill" style="width:${Math.min(100,avance)}%;background:${avance<80?'var(--g)':avance<100?'var(--a)':'var(--r)'}"></div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:6px">${fmt(costoMes)} sobre ${fmt(cf)} de costos fijos del mes</div>
+    </div>`:''}`;
+}
+
+/* ── Configurar ── */
+function renderProyConfig(){
+  const cf=CFG.costosF||[];
+  return`
+    <div class="slbl">Parámetros de negocio</div>
+    <div class="card cp">
+      <div class="grid2">
+        <div class="ff"><label>Margen bruto objetivo (%)</label>
+          <input type="number" value="${CFG.margen||35}" min="1" max="99"
+            onchange="CFG.margen=parseFloat(this.value)||35;scf()"></div>
+        <div class="ff"><label>Días hábiles/mes</label>
+          <input type="number" value="${CFG.diasMes||26}" min="1" max="31"
+            onchange="CFG.diasMes=parseInt(this.value)||26;scf()"></div>
+      </div>
+      <div class="grid2">
+        <div class="ff"><label>Turnos por día</label>
+          <input type="number" value="${CFG.turnosDia||2}" min="1" max="5"
+            onchange="CFG.turnosDia=parseInt(this.value)||2;scf()"></div>
+        <div class="ff"><label>Coberturas/turno</label>
+          <input type="number" value="${CFG.coberturasTurno||0}" placeholder="Ej: 40"
+            onchange="CFG.coberturasTurno=parseInt(this.value)||0;scf()"></div>
+      </div>
+      <div class="ff"><label>Ticket referencia ($) — para calcular coberturas mínimas</label>
+        <input type="number" value="${CFG.ticketRef||0}" placeholder="Ej: 8500"
+          onchange="CFG.ticketRef=parseFloat(this.value)||0;scf()"></div>
+    </div>
+
+    <div class="slbl">Costos fijos mensuales</div>
+    <div class="ibox blue"><i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0"></i>
+    <span>Arriendos, sueldos, servicios básicos, seguros — lo que pagas aunque no vendas.</span></div>
+    <div class="card" id="cf-list">
+      ${cf.length?cf.map((c,i)=>`
+        <div class="row">
+          <div class="row-info"><div class="row-t">${c.nombre}</div><div class="row-s">${c.tipo}</div></div>
+          <div class="row-amt">${fmt(c.monto)}</div>
+          <button onclick="CFG.costosF.splice(${i},1);scf();renderProy()" style="border:none;background:var(--rl);color:var(--r);border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;flex-shrink:0"><i class="ti ti-x"></i></button>
+        </div>`).join('')+`
+        <div class="total-row"><span class="total-lbl">Total CF</span>
+        <span class="total-v">${fmt(cf.reduce((s,c)=>s+c.monto,0))}</span></div>`
+      :'<div style="padding:14px;font-size:13px;color:var(--t3);text-align:center">Sin costos fijos</div>'}
+    </div>
+    <div class="card cp">
+      <div style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Agregar costo fijo</div>
+      <div class="ff"><label>Descripción</label>
+        <input id="cf-n" placeholder="Ej: Arriendo local, Sueldo cocinero..."></div>
+      <div class="grid2">
+        <div class="ff"><label>Monto mensual ($)</label><input type="number" id="cf-m" placeholder="0"></div>
+        <div class="ff"><label>Tipo</label>
+          <select id="cf-t">
+            <option>Personal</option><option>Arriendo</option><option>Servicios básicos</option>
+            <option>Marketing</option><option>Contabilidad</option><option>Seguros</option><option>Otro</option>
+          </select></div>
+      </div>
+      <button class="btn-p" style="height:44px;font-size:14px;margin:0" onclick="addCF()">
+        <i class="ti ti-plus"></i>Agregar</button>
     </div>`;
 }
 
-/* ════════════════════════════════
-   IMPUESTOS
-   ════════════════════════════════ */
-function renderImpuestos(){
-  const groups=[{key:'general',label:'Generales'},{key:'bebidas',label:'Bebidas y alcohol'},{key:'carnes',label:'Carnes y harinas'}];
-  document.getElementById('pg-impuestos').innerHTML=`
-    <div class="info-box"><i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0"></i>
-    <span>Tasas SII Chile vigentes. Toca para editar.</span></div>
-    ${groups.map(g=>`<div class="slbl">${g.label}</div><div class="card" id="tc-${g.key}"></div>`).join('')}`;
-  groups.forEach(g=>renderTaxGroup(g.key));
-}
-function renderTaxGroup(gk){
-  const el=document.getElementById('tc-'+gk);if(!el)return;
-  el.innerHTML=TAXES[gk].map((t,i)=>`
-    <div>
-      <div class="tax-row-edit" onclick="toggleTax('${gk}',${i})">
-        <div class="tax-icon-box" style="background:${t.ic}"><i class="ti ${t.icon}" style="color:${t.icol}"></i></div>
-        <div class="row-info"><div class="row-t">${t.nombre}</div><div class="row-s">${t.desc}</div></div>
-        <div style="text-align:right;flex-shrink:0;margin-left:8px">
-          <div style="font-weight:600;font-size:15px;color:${t.ad>0?'var(--r)':'var(--g)'}">${fmtP(t.iva+t.ad)}</div>
-          <div style="font-size:11px;color:var(--t3)">${t.tipo}</div>
-        </div>
-        <i class="ti ti-chevron-down chev" id="chev-${gk}-${i}"></i>
-      </div>
-      <div class="edit-panel" id="ep-${gk}-${i}">
-        <div style="font-size:11px;color:var(--t3);margin-bottom:10px"><i class="ti ti-scale" style="vertical-align:-2px"></i> ${t.nota}</div>
-        <div class="rate-row"><span class="rate-lbl">IVA base</span>
-          <input class="rate-input" type="number" value="${t.iva}" step="0.5" min="0" max="100" onchange="updTax('${gk}',${i},'iva',this.value)">
-          <span style="font-size:13px;color:var(--t3);margin-left:4px">%</span></div>
-        <div class="rate-row"><span class="rate-lbl">${t.tipo==='anticipado'?'IVA anticipado':'Imp. adicional'}</span>
-          <input class="rate-input" type="number" value="${t.ad}" step="0.5" min="0" max="100" onchange="updTax('${gk}',${i},'ad',this.value)">
-          <span style="font-size:13px;color:var(--t3);margin-left:4px">%</span></div>
-        <div style="background:#fff;border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;font-size:12px;margin-top:4px">
-          <span style="color:#666">Carga total</span><span style="font-weight:600" id="tt-${gk}-${i}">${fmtP(t.iva+t.ad)}</span>
-        </div>
-        <button class="save-mini" onclick="saveTaxes();closeAllTax();alert('✓ Tasas guardadas')">
-          <i class="ti ti-check" style="vertical-align:-2px"></i> Guardar cambios</button>
-      </div>
-    </div>`).join('');
-}
-function toggleTax(gk,i){
-  const ep=document.getElementById(`ep-${gk}-${i}`),ch=document.getElementById(`chev-${gk}-${i}`);
-  const open=ep.classList.contains('open');closeAllTax();
-  if(!open){ep.classList.add('open');ch.style.transform='rotate(180deg)';}
-}
-function closeAllTax(){
-  document.querySelectorAll('.edit-panel').forEach(p=>p.classList.remove('open'));
-  document.querySelectorAll('[id^="chev-"]').forEach(c=>c.style.transform='');
-}
-function updTax(gk,i,field,val){
-  TAXES[gk][i][field]=parseFloat(val)||0;
-  const el=document.getElementById(`tt-${gk}-${i}`);
-  if(el)el.textContent=fmtP(TAXES[gk][i].iva+TAXES[gk][i].ad);
+function addCF(){
+  const n=document.getElementById('cf-n')?.value.trim();
+  const m=parseFloat(document.getElementById('cf-m')?.value)||0;
+  const t=document.getElementById('cf-t')?.value||'Otro';
+  if(!n||!m){alert('Completa nombre y monto');return;}
+  if(!CFG.costosF) CFG.costosF=[];
+  CFG.costosF.push({nombre:n,monto:m,tipo:t});
+  scf(); renderProy();
 }
 
-go('home',document.querySelectorAll('.bnav')[0]);
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+go('home', document.querySelectorAll('.bnav')[0]);
 </script>
 </body>
 </html>

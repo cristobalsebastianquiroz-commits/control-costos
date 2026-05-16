@@ -866,7 +866,7 @@ function renderCatalogo(){
         <i class="ti ti-table-import" style="font-size:18px"></i>Importar CSV
       </button>
     </div>
-    <input type="file" id="csv-inp" accept=".csv,.txt" style="display:none" onchange="importarCSV(this)">`;
+    <input type="file" id="csv-inp" accept=".xlsx,.xls,.csv,.txt" style="display:none" onchange="importarArchivo(this)">`;
 
   if(!CAT.length){
     document.getElementById('pg-catalogo').innerHTML=`
@@ -920,96 +920,252 @@ function renderCatalogo(){
    Campos: nombre | area | categoria | subcategoria | destino | impuesto | alias_1 … alias_5
 ══════════════════════════════════════ */
 function descargarPlantilla(){
-  const AREAS   =['Cocina caliente','Pastelería','Barra','Bodega general','Desayuno','Limpieza','Desechables'];
-  const DESTINOS=['desayuno','buffet','pasteleria','bodega'];
-  const IMPUESTOS_IDS=Object.keys(IMP);
+  /* ── Genera un .xlsx real con SheetJS (cargado dinámicamente) ── */
+  function _buildAndDownload(XLSX){
+    const AREAS   =['Cocina caliente','Pastelería','Barra','Bodega general','Desayuno','Limpieza','Desechables'];
+    const DESTINOS=['desayuno','buffet','pasteleria','bodega'];
 
-  // ── Encabezados ──
-  const headers=[
-    'nombre',
-    'area',
-    'categoria',
-    'subcategoria',
-    'destino_cocina',
-    'impuesto',
-    'alias_1','alias_2','alias_3','alias_4','alias_5'
-  ];
+    // ── Filas de ejemplo ──
+    const ejemplos=[
+      {nombre:'Pechuga de pollo',   area:'Cocina caliente', categoria:'Proteínas',  subcategoria:'Pollo',         destino_cocina:'buffet',     impuesto:'iva',        alias_1:'PECHUGA POLLO',                    alias_2:'PECHUGA POLLO CJ 10KG',       alias_3:'Pollo pechuga', alias_4:'', alias_5:''},
+      {nombre:'Arroz Tucapel',      area:'Bodega general',  categoria:'Abarrotes',  subcategoria:'Granos',        destino_cocina:'bodega',     impuesto:'iva',        alias_1:'ARROZ TUCAPEL BLUE BONNET G2 10X1KG',alias_2:'ARROZ TUCAPEL',              alias_3:'Arroz',         alias_4:'', alias_5:''},
+      {nombre:'Pepsi lata 350',     area:'Barra',           categoria:'Bebidas',    subcategoria:'Azucaradas',    destino_cocina:'buffet',     impuesto:'iva_azucar', alias_1:'PEPSI 6PFX4-LAT350',               alias_2:'PEPSI ZERO 6PFX4-LATA 350CC', alias_3:'Pepsi',         alias_4:'', alias_5:''},
+      {nombre:'Mantequilla Kumey',  area:'Pastelería',      categoria:'Lácteos',    subcategoria:'Mantequilla',   destino_cocina:'pasteleria', impuesto:'iva',        alias_1:'MANTEQUILLA KUMEY 20 x 250 GR (CJ)', alias_2:'Mantequilla',                alias_3:'',              alias_4:'', alias_5:''},
+      {nombre:'Key Higienizante',   area:'Bodega general',  categoria:'Limpieza',   subcategoria:'Desinfectantes',destino_cocina:'bodega',     impuesto:'iva',        alias_1:'KEY HIGIENIZANTE 1X5L',             alias_2:'Higienizante',               alias_3:'',              alias_4:'', alias_5:''},
+      {nombre:'Filete de Reineta',  area:'Cocina caliente', categoria:'Proteínas',  subcategoria:'Pescados',      destino_cocina:'buffet',     impuesto:'iva',        alias_1:'FILETE DE REINETA CJ 8 KG',         alias_2:'Reineta',                    alias_3:'',              alias_4:'', alias_5:''},
+      {nombre:'Berlin Insumo',      area:'Pastelería',      categoria:'Pastelería', subcategoria:'Berlines',      destino_cocina:'pasteleria', impuesto:'iva',        alias_1:'BERLIN INSUMO CJ X 36 UN',          alias_2:'Berlin',                     alias_3:'',              alias_4:'', alias_5:''},
+      {nombre:'Baguette Mini',      area:'Pastelería',      categoria:'Panadería',  subcategoria:'Panes',         destino_cocina:'desayuno',   impuesto:'iva',        alias_1:'BAGUETTE MINI CJ X 8 KG',           alias_2:'Baguette',                   alias_3:'',              alias_4:'', alias_5:''},
+      {nombre:'Guantes Nitrilo M',  area:'Bodega general',  categoria:'Limpieza',   subcategoria:'Utensilios',    destino_cocina:'bodega',     impuesto:'iva',        alias_1:'GUANTES NITRILO NEGRO - TALLA M 100 und',alias_2:'Guantes',               alias_3:'',              alias_4:'', alias_5:''},
+      {nombre:'Leche Lonco Entera', area:'Pastelería',      categoria:'Lácteos',    subcategoria:'Leche',         destino_cocina:'pasteleria', impuesto:'iva',        alias_1:'LECHE LONCO ENTERA 12X1LT',         alias_2:'Leche',                      alias_3:'',              alias_4:'', alias_5:''},
+    ];
 
-  // ── Hoja de referencia (como comentarios al final) ──
-  const refArea   = AREAS.map(a=>`"${a}"`).join(' | ');
-  const refDest   = DESTINOS.join(' | ');
-  const refImp    = IMPUESTOS_IDS.map(k=>`${k} (${IMP[k].n})`).join(' | ');
+    // ── Si hay productos en catálogo, exportarlos; si no, usar ejemplos ──
+    const filasDatos = CAT.length ? CAT.map(p=>({
+      nombre:         p.nombre||'',
+      area:           p.area||'',
+      categoria:      p.categoria||'',
+      subcategoria:   p.sub||'',
+      destino_cocina: p.destino||'bodega',
+      impuesto:       p.imp||'iva',
+      alias_1:        (p.aliases||[])[0]||'',
+      alias_2:        (p.aliases||[])[1]||'',
+      alias_3:        (p.aliases||[])[2]||'',
+      alias_4:        (p.aliases||[])[3]||'',
+      alias_5:        (p.aliases||[])[4]||'',
+    })) : ejemplos;
 
-  // ── Filas de ejemplo ──
-  const ejemplos=[
-    ['Pechuga de pollo','Cocina caliente','Proteínas','Pollo','buffet','iva','PECHUGA POLLO','PECHUGA POLLO CJ 10KG','Pollo pechuga','',''],
-    ['Arroz Tucapel','Bodega general','Abarrotes','Granos','bodega','iva','ARROZ TUCAPEL BLUE BONNET G2 10X1KG','ARROZ TUCAPEL','Arroz','',''],
-    ['Pepsi lata 350','Barra','Bebidas','Bebidas azucaradas','buffet','iva_azucar','PEPSI 6PFX4-LAT350','PEPSI ZERO 6PFX4-LATA 350CC','Pepsi','',''],
-    ['Mantequilla Kumey','Pastelería','Lácteos','Mantequilla','pasteleria','iva','MANTEQUILLA KUMEY 20 x 250 GR (CJ)','Mantequilla','','',''],
-    ['Key Higienizante','Bodega general','Limpieza','Desinfectantes','bodega','iva','KEY HIGIENIZANTE 1X5L','Higienizante','','',''],
-    ['Filete de Reineta','Cocina caliente','Proteínas','Pescados','buffet','iva','FILETE DE REINETA CJ 8 KG','Reineta','','',''],
-    ['Berlin Insumo','Pastelería','Pastelería','Berlines','pasteleria','iva','BERLIN INSUMO CJ X 36 UN','Berlin','','',''],
-    ['Baguette Mini','Pastelería','Panadería','Panes','desayuno','iva','BAGUETTE MINI CJ X 8 KG','Baguette','','',''],
-    ['Guantes Nitrilo M','Bodega general','Limpieza','Utensilios','bodega','iva','GUANTES NITRILO NEGRO - TALLA M 100 und','Guantes','','',''],
-    ['Leche Lonco Entera','Pastelería','Lácteos','Leche','pasteleria','iva','LECHE LONCO ENTERA 12X1LT','Leche','','',''],
-  ];
+    // ── Hoja principal: PRODUCTOS ──
+    const wsProd = XLSX.utils.json_to_sheet(filasDatos, {
+      header:['nombre','area','categoria','subcategoria','destino_cocina','impuesto',
+              'alias_1','alias_2','alias_3','alias_4','alias_5']
+    });
 
-  // ── Exportar los productos existentes si los hay ──
-  const existentes=CAT.map(p=>[
-    p.nombre,
-    p.area||'',
-    p.categoria||'',
-    p.sub||'',
-    p.destino||'bodega',
-    p.imp||'iva',
-    ...(p.aliases||[]).slice(0,5),
-    ...Array(Math.max(0,5-(p.aliases||[]).length)).fill('')
-  ]);
+    // Anchos de columna en caracteres
+    wsProd['!cols'] = [
+      {wch:28}, // nombre
+      {wch:18}, // area
+      {wch:18}, // categoria
+      {wch:18}, // subcategoria
+      {wch:16}, // destino_cocina
+      {wch:14}, // impuesto
+      {wch:40}, // alias_1
+      {wch:40}, // alias_2
+      {wch:30}, // alias_3
+      {wch:20}, // alias_4
+      {wch:20}, // alias_5
+    ];
 
-  // ── Construir CSV ──
-  const esc = v => {
-    const s=String(v||'');
-    return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g,'""')}"` : s;
-  };
-  const row = cols => cols.map(esc).join(',');
+    // Congelar fila de encabezado
+    wsProd['!freeze'] = {xSplit:0, ySplit:1};
 
-  const lines=[
-    '# PLANTILLA DE CARGA MASIVA — CostControl',
-    '# Instrucciones:',
-    '#   1. No borres ni modifiques la fila de encabezados',
-    '#   2. Completa una fila por producto',
-    '#   3. Los campos nombre / area / destino_cocina / impuesto son OBLIGATORIOS',
-    '#   4. Puedes agregar hasta 5 aliases (nombres tal como aparecen en la factura)',
-    '#   5. Guarda como CSV (separado por comas) y luego usa "Importar CSV" en la app',
-    '#',
-    `# VALORES VÁLIDOS para area:       ${refArea}`,
-    `# VALORES VÁLIDOS para destino_cocina: ${refDest}`,
-    `# VALORES VÁLIDOS para impuesto:   ${refImp}`,
-    '#',
-    row(headers),
-    ...(existentes.length ? existentes.map(row) : ejemplos.map(row))
-  ];
+    // ── Hoja 2: VALORES VÁLIDOS (referencia) ──
+    const valoresRef = [
+      ['CAMPO',          'VALORES VÁLIDOS',                                          'NOTAS'],
+      ['nombre',         'Texto libre',                                              'Obligatorio. Nombre comercial del producto.'],
+      ['area',           AREAS.join(' | '),                                         'Obligatorio. Usa exactamente uno de estos valores.'],
+      ['categoria',      'Texto libre (ej: Proteínas, Lácteos, Bebidas…)',           'Opcional. Agrupa productos dentro del área.'],
+      ['subcategoria',   'Texto libre (ej: Pollo, Leche, Granos…)',                  'Opcional.'],
+      ['destino_cocina', DESTINOS.join(' | '),                                      'Obligatorio. A qué cocina/área de producción va.'],
+      ['impuesto',       Object.entries(IMP).map(([k,v])=>`${k} = ${v.n}`).join(' | '), 'Obligatorio. Tipo de impuesto SII.'],
+      ['alias_1…alias_5','Texto tal como aparece en la factura del proveedor',      'Muy importante para el reconocimiento OCR. Ej: "PECHUGA POLLO CJ 10KG"'],
+    ];
+    const wsRef = XLSX.utils.aoa_to_sheet(valoresRef);
+    wsRef['!cols'] = [{wch:16},{wch:80},{wch:55}];
 
-  const csv=lines.join('\r\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download='catalogo_productos.csv'; a.click();
-  URL.revokeObjectURL(url);
+    // ── Libro ──
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsProd, 'Productos');
+    XLSX.utils.book_append_sheet(wb, wsRef,  'Valores válidos');
+
+    XLSX.writeFile(wb, 'catalogo_productos.xlsx');
+  }
+
+  // Cargar SheetJS dinámicamente si no está disponible
+  if(window.XLSX){
+    _buildAndDownload(window.XLSX);
+  } else {
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload=()=>_buildAndDownload(window.XLSX);
+    s.onerror=()=>alert('No se pudo cargar la librería Excel. Verifica tu conexión a internet.');
+    document.head.appendChild(s);
+  }
 }
 
 /* ══════════════════════════════════════
    IMPORTAR CSV
 ══════════════════════════════════════ */
-function importarCSV(input){
+function importarArchivo(input){
   const file=input.files[0]; if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const text=e.target.result.replace(/^\uFEFF/,''); // quitar BOM
-    procesarCSV(text);
-  };
-  reader.readAsText(file,'UTF-8');
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
   input.value='';
+
+  if(ext==='xlsx'||ext==='xls'){
+    function _leerXLSX(XLSX){
+      const reader=new FileReader();
+      reader.onload=e=>{
+        try{
+          const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+          const sheetName=wb.SheetNames.find(n=>n.toLowerCase().includes('prod'))||wb.SheetNames[0];
+          const ws=wb.Sheets[sheetName];
+          const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+          if(!rows.length){ alert('La hoja está vacía.'); return; }
+          const normalized=rows.map(r=>{
+            const obj={};
+            Object.keys(r).forEach(k=>{ obj[k.toLowerCase().trim().replace(/[\s]+/g,'_')]=String(r[k]||'').trim(); });
+            return obj;
+          });
+          procesarFilas(normalized);
+        } catch(err){ alert('Error al leer el archivo Excel: '+err.message); }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+    if(window.XLSX){ _leerXLSX(window.XLSX); }
+    else{
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload=()=>_leerXLSX(window.XLSX);
+      s.onerror=()=>alert('No se pudo cargar la librería Excel.');
+      document.head.appendChild(s);
+    }
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const text=e.target.result.replace(/^\uFEFF/,'');
+      procesarCSV(text);
+    };
+    reader.readAsText(file,'UTF-8');
+  }
+}
+
+function importarCSV(input){ importarArchivo(input); }
+
+/* procesarFilas — recibe array de objetos {nombre, area, ...} ya parseados (desde Excel o CSV) */
+function procesarFilas(filas){
+  const VALID_AREAS   =['Cocina caliente','Pastelería','Barra','Bodega general','Desayuno','Limpieza','Desechables'];
+  const VALID_DESTINOS=['desayuno','buffet','pasteleria','bodega'];
+  const VALID_IMP     =Object.keys(IMP);
+
+  const nuevos=[], errores=[], omitidos=[];
+
+  filas.forEach((cols, li)=>{
+    // Soporte para variantes de nombre de columna
+    const get = (...keys) => {
+      for(const k of keys){
+        const v = cols[k] || cols[k.replace(/_/g,' ')] || '';
+        if(v) return String(v).trim();
+      }
+      return '';
+    };
+
+    const nombre = get('nombre','name','producto','product');
+    if(!nombre){ errores.push(`Fila ${li+2}: sin nombre`); return; }
+
+    let area = get('area','familia','family') || 'Bodega general';
+    const areaMatch=VALID_AREAS.find(a=>
+      a.toLowerCase()===area.toLowerCase() ||
+      a.toLowerCase().includes(area.toLowerCase()) ||
+      area.toLowerCase().includes(a.toLowerCase().split(' ')[0])
+    );
+    if(areaMatch) area=areaMatch;
+    else{ errores.push(`Fila ${li+2} (${nombre}): área "${area}" desconocida, se usó "Bodega general"`); area='Bodega general'; }
+
+    let destino = (get('destino_cocina','destino','cocina','kitchen')||'bodega').toLowerCase();
+    if(!VALID_DESTINOS.includes(destino)){
+      errores.push(`Fila ${li+2} (${nombre}): destino "${destino}" inválido, se usó "bodega"`);
+      destino='bodega';
+    }
+
+    let imp = (get('impuesto','impuesto_sii','tax','imp')||'iva').toLowerCase();
+    if(!VALID_IMP.includes(imp)){
+      errores.push(`Fila ${li+2} (${nombre}): impuesto "${imp}" inválido, se usó "iva"`);
+      imp='iva';
+    }
+
+    const categoria    = get('categoria','category','cat');
+    const sub          = get('subcategoria','sub','subcategory','sub_categoria');
+
+    // Aliases: alias_1..alias_5 o alias1..alias5
+    const aliases=[];
+    for(let ai=1;ai<=5;ai++){
+      const al = get(`alias_${ai}`,`alias${ai}`);
+      if(al) aliases.push(al);
+    }
+
+    const existe=CAT.find(p=>p.nombre.toLowerCase()===nombre.toLowerCase());
+    if(existe){
+      const nuevosAl=aliases.filter(a=>!(existe.aliases||[]).includes(a));
+      if(nuevosAl.length){ (existe.aliases=existe.aliases||[]).push(...nuevosAl); omitidos.push(`${nombre} (actualizado ${nuevosAl.length} alias)`); }
+      else omitidos.push(`${nombre} (ya existe, sin cambios)`);
+      return;
+    }
+
+    nuevos.push({
+      id:'p'+Date.now()+Math.random().toString(36).slice(2,6),
+      nombre, area, categoria, sub, destino, imp, aliases
+    });
+  });
+
+  if(!nuevos.length && !omitidos.length && errores.length){
+    alert('No se pudo importar ningún producto.\n\nErrores:\n'+errores.slice(0,10).join('\n'));
+    return;
+  }
+
+  _pendingImport = nuevos;
+
+  openModal(`
+    <div class="mtitle">Resultado de importación</div>
+    ${nuevos.length?`
+    <div class="ibox green" style="margin-bottom:10px">
+      <i class="ti ti-check" style="font-size:16px;flex-shrink:0"></i>
+      <span><b>${nuevos.length} producto${nuevos.length!==1?'s':''} nuevos</b> listos para importar</span>
+    </div>
+    <div class="card" style="margin-bottom:12px;max-height:260px;overflow-y:auto">
+      ${nuevos.map(p=>`
+        <div style="padding:9px 14px;border-bottom:1px solid var(--border2)">
+          <div style="font-size:13px;font-weight:700">${p.nombre}</div>
+          <div style="font-size:11px;color:var(--t3)">${p.area} · ${p.categoria||'—'} · <span style="color:${cocinaColor(p.destino)};font-weight:600">${cocinaById(p.destino).label}</span> · ${IMP[p.imp]?.n}</div>
+          ${p.aliases.length?`<div style="font-size:11px;color:var(--b);margin-top:2px">📄 ${p.aliases.join(' · ')}</div>`:'<div style="font-size:11px;color:var(--a)">⚠ Sin aliases</div>'}
+        </div>`).join('')}
+    </div>`:''}
+    ${omitidos.length?`
+    <div class="ibox blue" style="margin-bottom:10px">
+      <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0"></i>
+      <span><b>${omitidos.length}</b> fila${omitidos.length!==1?'s':''} omitida${omitidos.length!==1?'s':''} (ya existían)</span>
+    </div>`:''}
+    ${errores.length?`
+    <div class="ibox orange" style="margin-bottom:10px">
+      <i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0"></i>
+      <div><b>${errores.length} advertencia${errores.length!==1?'s':''}:</b><br>
+      <span style="font-size:11px">${errores.slice(0,8).join('<br>')}</span></div>
+    </div>`:''}
+    ${nuevos.length?`
+    <button class="btn-p" onclick="confirmarImport()">
+      <i class="ti ti-check"></i>Importar ${nuevos.length} producto${nuevos.length!==1?'s':''}
+    </button>`:''}
+    <button onclick="closeM()" style="width:100%;padding:12px;border:1px solid var(--border);background:var(--bg);color:var(--t2);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px">
+      ${nuevos.length?'Cancelar':'Cerrar'}
+    </button>`);
 }
 
 function procesarCSV(text){

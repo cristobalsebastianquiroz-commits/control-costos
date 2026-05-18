@@ -9,11 +9,115 @@
 <title>CostControl</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<!-- Firebase SDK (Firestore — mismo patrón que CámaraControl) -->
 <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, set, onValue, off, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-  window._fbSDK = { initializeApp, getDatabase, ref, set, onValue, off, get };
-  window.dispatchEvent(new Event('fbsdkready'));
+import { initializeApp }                                          from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, collection, setDoc, onSnapshot,
+         getDoc, getDocs, writeBatch }                           from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const FB_CONFIG = {
+  apiKey:            "REEMPLAZA_CON_TU_NUEVA_API_KEY",
+  authDomain:        "camara-control.firebaseapp.com",
+  projectId:         "camara-control",
+  storageBucket:     "camara-control.firebasestorage.app",
+  messagingSenderId: "942921368341",
+  appId:             "1:942921368341:web:227d66e8ff3e0d24431f1c"
+};
+const TENANT = 'control-costo';   // colección raíz en Firestore
+
+const app = initializeApp(FB_CONFIG);
+const db  = getFirestore(app);
+
+// ── Indicador de sync ──
+function syncDot(s){
+  const bar=document.getElementById('fb-bar');
+  const msg=document.getElementById('fb-bar-msg');
+  const icon=document.getElementById('fb-bar-icon');
+  if(!bar) return;
+  bar.className='fb-bar '+(s==='ok'?'ok':s==='err'?'err':'sync');
+  bar.classList.remove('hidden');
+  if(msg) msg.textContent = s==='ok'?'Sincronizado · '+window._DEVICE_LABEL
+                           :s==='err'?'Sin conexión — modo local'
+                           :'Sincronizando…';
+  if(icon) icon.className='ti '+(s==='ok'?'ti-cloud-check':s==='err'?'ti-cloud-x':'ti-cloud');
+  if(s==='ok') setTimeout(()=>bar.classList.add('hidden'), 3000);
+  const ci=document.getElementById('tb-cloud-icon');
+  if(ci) ci.style.color=s==='ok'?'var(--g)':s==='err'?'var(--r)':'var(--b)';
+}
+
+// ── Escribir colección completa ──
+async function fbWrite(col, data){
+  try{
+    await setDoc(doc(db, TENANT, col), { data: JSON.stringify(data), updatedAt: new Date().toISOString() });
+  } catch(e){ console.warn('fbWrite error:', col, e); }
+}
+
+// ── Leer colección ──
+async function fbRead(col){
+  try{
+    const snap = await getDoc(doc(db, TENANT, col));
+    if(snap.exists() && snap.data().data) return JSON.parse(snap.data().data);
+  } catch(e){ console.warn('fbRead error:', col, e); }
+  return null;
+}
+
+// ── Suscribirse a cambios en tiempo real ──
+function fbSubscribe(col, onChange){
+  return onSnapshot(doc(db, TENANT, col),
+    snap => {
+      if(!snap.exists()) return;
+      try{ onChange(JSON.parse(snap.data().data)); } catch(e){}
+    },
+    err => { console.error('fbSubscribe error:', col, err); syncDot('err'); }
+  );
+}
+
+// ── Arranque: primer sync + listeners ──
+window.addEventListener('DOMContentLoaded', async () => {
+  syncDot('sync');
+
+  // Leer datos remotos (Firestore tiene prioridad)
+  const [rCat, rFac, rInv, rCfg] = await Promise.all([
+    fbRead('cat'), fbRead('fac'), fbRead('inv'), fbRead('cfg')
+  ]);
+
+  // Acceder a variables globales del script principal
+  if(rCat) { window.CAT = rCat; localStorage.setItem('cc_cat', JSON.stringify(rCat)); }
+  if(rFac) { window.FAC = rFac; localStorage.setItem('cc_fac', JSON.stringify(rFac)); }
+  if(rInv) { window.INV = rInv; localStorage.setItem('cc_inv', JSON.stringify(rInv)); }
+  if(rCfg) { window.CFG = rCfg; localStorage.setItem('cc_cfg', JSON.stringify(rCfg)); }
+
+  // Si no hay nada en Firestore, subir datos locales
+  if(!rCat && window.CAT && window.CAT.length) fbWrite('cat', window.CAT);
+  if(!rFac && window.FAC && window.FAC.length) fbWrite('fac', window.FAC);
+  if(!rInv && window.INV && Object.keys(window.INV||{}).length) fbWrite('inv', window.INV);
+  if(!rCfg && window.CFG) fbWrite('cfg', window.CFG);
+
+  syncDot('ok');
+
+  // Render inicial con datos frescos
+  const bnav0 = document.querySelectorAll('.bnav')[0];
+  if(window.go) window.go('home', bnav0||null);
+
+  // Listeners en tiempo real — re-renderizan la página activa
+  function reRender(){
+    const active=document.querySelector('.page.on');
+    if(!active||!window.go) return;
+    const pid=active.id.replace('pg-','');
+    const bnav=[...document.querySelectorAll('.bnav')].find(b=>b.classList.contains('on'));
+    syncDot('ok');
+    window.go(pid, bnav||null);
+  }
+
+  fbSubscribe('cat', v=>{ if(JSON.stringify(v)!==JSON.stringify(window.CAT)){ window.CAT=v; localStorage.setItem('cc_cat',JSON.stringify(v)); reRender(); }});
+  fbSubscribe('fac', v=>{ if(JSON.stringify(v)!==JSON.stringify(window.FAC)){ window.FAC=v; localStorage.setItem('cc_fac',JSON.stringify(v)); reRender(); }});
+  fbSubscribe('inv', v=>{ if(JSON.stringify(v)!==JSON.stringify(window.INV)){ window.INV=v; localStorage.setItem('cc_inv',JSON.stringify(v)); reRender(); }});
+  fbSubscribe('cfg', v=>{ if(JSON.stringify(v)!==JSON.stringify(window.CFG)){ window.CFG=v; localStorage.setItem('cc_cfg',JSON.stringify(v)); reRender(); }});
+});
+
+// ── Exponer funciones de escritura para el script principal ──
+window._fbWrite = fbWrite;
+window._syncDot = syncDot;
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -418,207 +522,20 @@ const _saveLocal = ()=>{
 };
 
 /* ══════════════════════════════════════
-   FIREBASE — SINCRONIZACIÓN EN TIEMPO REAL
+   FIREBASE — las funciones de escritura
+   delegan en window._fbWrite (definido
+   en el <script type="module"> de arriba)
 ══════════════════════════════════════ */
-let _fbDB = null, _fbTenant = '', _fbListeners = [], _fbReady = false, _fbMode = 'local';
-let _suppressRemoteUpdate = false; // evita loop escritura→lectura→escritura
 
-function _fbRef(path){ return window._fbSDK.ref(_fbDB, `${_fbTenant}/${path}`); }
+/* sv/sf/sinv/scf: guardan local Y suben a Firestore */
+const sv  = ()=>{ localStorage.setItem('cc_cat', JSON.stringify(CAT)); if(window._fbWrite) window._fbWrite('cat', CAT); };
+const sf  = ()=>{ localStorage.setItem('cc_fac', JSON.stringify(FAC)); if(window._fbWrite) window._fbWrite('fac', FAC); };
+const sinv= ()=>{ localStorage.setItem('cc_inv', JSON.stringify(INV)); if(window._fbWrite) window._fbWrite('inv', INV); };
+const scf = ()=>{ localStorage.setItem('cc_cfg', JSON.stringify(CFG)); if(window._fbWrite) window._fbWrite('cfg', CFG); };
 
-function _showFbBar(msg, type='sync', autohide=false){
-  const bar=document.getElementById('fb-bar');
-  const msgEl=document.getElementById('fb-bar-msg');
-  const icon=document.getElementById('fb-bar-icon');
-  const dot=document.getElementById('fb-dot');
-  if(!bar)return;
-  bar.className='fb-bar '+type;
-  msgEl.textContent=msg;
-  icon.className='ti '+(type==='ok'?'ti-cloud-check':type==='err'?'ti-cloud-x':'ti-cloud');
-  dot.style.background=type==='ok'?'var(--g)':type==='err'?'var(--r)':'var(--b)';
-  dot.style.animationName=type==='sync'?'pulse':'none';
-  if(autohide) setTimeout(()=>bar.classList.add('hidden'),3000);
-  // Actualizar icono en topbar
-  const ci=document.getElementById('tb-cloud-icon');
-  if(ci) ci.style.color=type==='ok'?'var(--g)':type==='err'?'var(--r)':'var(--b)';
-}
-
-async function conectarFirebase(){
-  const apiKey   = document.getElementById('fb-apikey')?.value.trim();
-  const authDomain= document.getElementById('fb-authdomain')?.value.trim();
-  const databaseURL= document.getElementById('fb-dburl')?.value.trim();
-  const projectId= document.getElementById('fb-projectid')?.value.trim();
-  const appId    = document.getElementById('fb-appid')?.value.trim();
-  const tenant   = (document.getElementById('fb-tenant')?.value.trim()||'default').replace(/[^a-z0-9_-]/gi,'_');
-
-  if(!apiKey||!databaseURL){
-    alert('API Key y Database URL son obligatorios.');return;
-  }
-  const btn=document.getElementById('setup-btn');
-  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader" style="animation:spin .8s linear infinite"></i> Conectando…';
-
-  try{
-    // Esperar SDK si aún no cargó
-    if(!window._fbSDK){ await new Promise(r=>window.addEventListener('fbsdkready',r,{once:true})); }
-    const { initializeApp, getDatabase, ref, set, onValue, off, get } = window._fbSDK;
-
-    const app = initializeApp({ apiKey, authDomain, databaseURL, projectId, appId },
-                               'cc-app-'+(Date.now()));
-    _fbDB     = getDatabase(app);
-    _fbTenant = tenant;
-    _fbMode   = 'firebase';
-    _fbReady  = true;
-
-    // Guardar config en localStorage para auto-reconectar
-    localStorage.setItem('cc_fb_config', JSON.stringify({ apiKey, authDomain, databaseURL, projectId, appId, tenant }));
-
-    // Primer sync: leer datos remotos y mezclar con locales
-    await _fbFirstSync();
-
-    // Suscribir listeners en tiempo real
-    _fbSubscribe();
-
-    document.getElementById('setup-wrap').style.display='none';
-    _showFbBar('Sincronizado · '+DEVICE.label, 'ok', true);
-    go('home', document.querySelectorAll('.bnav')[0]);
-
-  } catch(err){
-    console.error('Firebase error:', err);
-    btn.disabled=false; btn.innerHTML='<i class="ti ti-cloud-upload"></i>Conectar y sincronizar';
-    alert('Error al conectar: '+err.message+'\n\nVerifica las credenciales y que la Realtime Database esté habilitada.');
-  }
-}
-
-async function _fbFirstSync(){
-  const { get } = window._fbSDK;
-  _showFbBar('Sincronizando datos…', 'sync');
-  try{
-    const snap = await get(_fbRef('data'));
-    if(snap.exists()){
-      const remote = snap.val();
-      // Mezclar: remoto tiene prioridad para CAT y CFG; FAC e INV se unen por ID
-      CAT = remote.cat || CAT;
-      CFG = remote.cfg || CFG;
-      // FAC: unir por id, remoto + local nuevos
-      const remFac = remote.fac || [];
-      const localFacIds = new Set(remFac.map(f=>f.id));
-      const localNew = FAC.filter(f=>!localFacIds.has(f.id));
-      FAC = [...remFac, ...localNew];
-      // INV: merge
-      INV = Object.assign({}, INV, remote.inv||{});
-      _saveLocal();
-    } else {
-      // Primera vez en Firebase: subir datos locales
-      await _fbWrite();
-    }
-  } catch(e){ console.warn('First sync warn:', e); }
-}
-
-function _fbWrite(){
-  if(!_fbReady||!_fbDB) return Promise.resolve();
-  _suppressRemoteUpdate = true;
-  const { set } = window._fbSDK;
-  return set(_fbRef('data'), { cat:CAT, fac:FAC, inv:INV, cfg:CFG })
-    .then(()=>{ setTimeout(()=>{ _suppressRemoteUpdate=false; }, 1500); })
-    .catch(e=>{ console.error('fbWrite error:', e); _suppressRemoteUpdate=false; });
-}
-
-function _fbSubscribe(){
-  if(!_fbReady||!_fbDB) return;
-  const { onValue } = window._fbSDK;
-  const dataRef = _fbRef('data');
-  const unsub = onValue(dataRef, snap=>{
-    if(_suppressRemoteUpdate) return;
-    if(!snap.exists()) return;
-    const remote = snap.val();
-    let changed = false;
-    if(JSON.stringify(remote.cat)!==JSON.stringify(CAT)){ CAT=remote.cat||[]; changed=true; }
-    if(JSON.stringify(remote.fac)!==JSON.stringify(FAC)){ FAC=remote.fac||[]; changed=true; }
-    if(JSON.stringify(remote.inv)!==JSON.stringify(INV)){ INV=remote.inv||{}; changed=true; }
-    if(JSON.stringify(remote.cfg)!==JSON.stringify(CFG)){ CFG=remote.cfg||CFG; changed=true; }
-    if(changed){
-      _saveLocal();
-      _showFbBar('Actualizado desde otro dispositivo', 'sync', true);
-      // Re-render página actual
-      const active=document.querySelector('.page.on');
-      if(active){
-        const pid=active.id.replace('pg-','');
-        const bnav=[...document.querySelectorAll('.bnav')].find(b=>b.classList.contains('on'));
-        go(pid, bnav||null);
-      }
-    }
-  }, err=>{ _showFbBar('Error de conexión · '+err.message, 'err'); });
-  _fbListeners.push(unsub);
-}
-
-/* Funciones sv/sf/sinv/scf — guardan local Y sincronizan con Firebase */
-const sv  = ()=>{ localStorage.setItem('cc_cat', JSON.stringify(CAT)); _fbWrite(); };
-const sf  = ()=>{ localStorage.setItem('cc_fac', JSON.stringify(FAC)); _fbWrite(); };
-const sinv= ()=>{ localStorage.setItem('cc_inv', JSON.stringify(INV)); _fbWrite(); };
-const scf = ()=>{ localStorage.setItem('cc_cfg', JSON.stringify(CFG)); _fbWrite(); };
-
-function usarLocalStorage(){
-  _fbMode='local'; _fbReady=false;
-  localStorage.setItem('cc_fb_config', '');
-  document.getElementById('setup-wrap').style.display='none';
-  document.getElementById('tb-cloud-icon').style.color='var(--t3)';
-  go('home', document.querySelectorAll('.bnav')[0]);
-}
-
-function abrirConfigFirebase(){
-  const saved=localStorage.getItem('cc_fb_config');
-  const cfg=saved?JSON.parse(saved):{};
-  if(cfg.apiKey) document.getElementById('fb-apikey').value=cfg.apiKey||'';
-  if(cfg.authDomain) document.getElementById('fb-authdomain').value=cfg.authDomain||'';
-  if(cfg.databaseURL) document.getElementById('fb-dburl').value=cfg.databaseURL||'';
-  if(cfg.projectId) document.getElementById('fb-projectid').value=cfg.projectId||'';
-  if(cfg.appId) document.getElementById('fb-appid').value=cfg.appId||'';
-  if(cfg.tenant) document.getElementById('fb-tenant').value=cfg.tenant||'';
-  // Actualizar badge de dispositivo
-  const badge=document.getElementById('setup-device-badge');
-  const lbl=document.getElementById('setup-device-lbl');
-  if(badge) badge.innerHTML=`<i class="ti ${DEVICE.icon}"></i> ${DEVICE.label} · ${DEVICE.type==='desktop'?'Escritorio':DEVICE.type==='tablet'?'Tablet':'Móvil'}`;
-  document.getElementById('setup-wrap').style.display='flex';
-}
-
-async function _conectarAutomatico(){
-  // ── Credenciales fijas — no requiere configuración manual ──
-  const FB_CONFIG = {
-    apiKey:            "REEMPLAZA_CON_TU_NUEVA_API_KEY",
-    authDomain:        "camara-control.firebaseapp.com",
-    databaseURL:       "https://camara-control-default-rtdb.firebaseio.com",
-    projectId:         "camara-control",
-    storageBucket:     "camara-control.firebasestorage.app",
-    messagingSenderId: "942921368341",
-    appId:             "1:942921368341:web:227d66e8ff3e0d24431f1c"
-  };
-  const TENANT = 'control-costo'; // prefijo de datos en la DB
-
-  _showFbBar('Conectando…', 'sync');
-  document.getElementById('fb-bar').classList.remove('hidden');
-
-  try{
-    const { initializeApp, getDatabase } = window._fbSDK;
-    const app  = initializeApp(FB_CONFIG, 'cc-app');
-    _fbDB      = getDatabase(app);
-    _fbTenant  = TENANT;
-    _fbMode    = 'firebase';
-    _fbReady   = true;
-
-    await _fbFirstSync();
-    _fbSubscribe();
-
-    _showFbBar('Sincronizado · '+DEVICE.label, 'ok', true);
-    go('home', document.querySelectorAll('.bnav')[0]);
-
-  } catch(err){
-    console.error('Firebase auto-connect error:', err);
-    _showFbBar('Sin conexión — modo local', 'err', true);
-    go('home', document.querySelectorAll('.bnav')[0]);
-  }
-}
-
-// Mantenemos _autoReconectar como alias para no romper nada
-async function _autoReconectar(){ return false; }
+/* Exponer variables globales para que el módulo Firebase las pueda leer/escribir */
+window.CAT = CAT; window.FAC = FAC; window.INV = INV; window.CFG = CFG;
+window._DEVICE_LABEL = DEVICE.label;
 
 /* ── Cocinas/destinos ── */
 const COCINAS=[
@@ -2561,18 +2478,16 @@ function addCF(){
 
 /* ══════════════════════════════════════
    INIT
+   El módulo Firebase (script type=module)
+   llama a go('home') cuando termina de
+   sincronizar. Aquí solo exponemos go()
+   globalmente para que pueda llamarlo.
 ══════════════════════════════════════ */
-(async function init(){
-  // ── Esperar SDK de Firebase ──
-  if(!window._fbSDK){
-    await new Promise(r=>{
-      window.addEventListener('fbsdkready',r,{once:true});
-      setTimeout(r,5000);
-    });
-  }
-  // ── Conectar automáticamente con credenciales fijas ──
-  await _conectarAutomatico();
-})();
+window.go = go;
+// Render inicial en caso de que el módulo
+// Firebase cargue antes que este script
+// (no debería pasar, pero por seguridad):
+go('home', document.querySelectorAll('.bnav')[0]);
 </script>
 </body>
 </html>

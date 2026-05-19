@@ -1467,6 +1467,21 @@ function parseOCRvsCAT(rawText){
   });
 }
 
+
+/* ── Stock badge helper ── */
+function stockBadge(prodId){
+  const inv = INV[prodId];
+  if(!inv || inv.stock === undefined) return '<span style="font-size:11px;color:var(--t3);font-weight:500">Sin stock registrado</span>';
+  const s = inv.stock;
+  const color = s <= 0 ? 'var(--r)' : s < 5 ? 'var(--a)' : 'var(--g)';
+  const icon  = s <= 0 ? 'ti-alert-circle' : s < 5 ? 'ti-alert-triangle' : 'ti-package';
+  const label = s <= 0 ? 'Sin stock' : s < 5 ? `Stock bajo: ${s} uds` : `Stock: ${s} uds`;
+  const uc    = inv.ultimoCosto ? ` · Último costo: ${fmt(inv.ultimoCosto)}` : '';
+  const uf    = inv.ultimaFecha ? ` · ${inv.ultimaFecha}` : '';
+  return \`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:\${color};background:\${color}18;border-radius:20px;padding:2px 8px;margin-top:3px">
+    <i class="ti \${icon}" style="font-size:12px"></i>\${label}\${uc}\${uf}
+  </span>\`;
+}
 /* ── Paso 3: revisión OCR ── */
 function renderFacReview(){
   const matched=ocrResults.filter(r=>r.elegido);
@@ -1507,6 +1522,7 @@ function renderReviewLine(r,i){
         <div class="match-ocr">OCR: "${r.textoOCR}"</div>
         <span class="badge bg" style="margin-top:4px">Match ${r.elegido.score}%</span>
         <span class="tpill ${t.ad>0?'tp-ex':'tp-ok'}">${t.n} (${fmtP(t.iva+t.ad)})</span>
+        <div style="margin-top:4px">${stockBadge(p.id)}</div>
         <div class="destino-sel">
           ${COCINAS.map(c=>`<button class="dest-btn${dest===c.id?' on':''}"
             style="${dest===c.id?'background:'+cocinaColor(c.id):''}"
@@ -1636,6 +1652,7 @@ function renderFacDrop(q){
       <div style="flex:1;min-width:0">
         <div style="font-size:14px;font-weight:600">${p.nombre}</div>
         <div style="font-size:11px;color:var(--t3)">${p.area} · ${p.categoria||''} · ${IMP[p.imp]?.n}</div>
+        ${stockBadge(p.id)}
       </div>
     </div>`).join('')}</div>`;
 }
@@ -1661,6 +1678,7 @@ function renderEditLine(it,i){
         <div class="pline-name">${it.nombre}</div>
         <div class="pline-path">${it.area} · ${it.categoria||''}</div>
         <span class="tpill ${t.ad>0?'tp-ex':'tp-ok'}">${t.n} (${fmtP(t.iva+t.ad)})</span>
+        <div style="margin-top:4px">${stockBadge(it.prodId)}</div>
         <div class="destino-sel">
           ${COCINAS.map(c=>`<button class="dest-btn${dest===c.id?' on':''}" 
             style="${dest===c.id?'background:'+cocinaColor(c.id):''}"
